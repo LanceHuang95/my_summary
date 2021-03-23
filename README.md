@@ -1,3 +1,4 @@
+``` py
 # TODO 速记
 '''
 def unzip_string(records):
@@ -1182,6 +1183,7 @@ class PicGather_mt(PicGather_base):
 pg = PicGather_mt('tiger')
 pg()
 
+```
 
 
 
