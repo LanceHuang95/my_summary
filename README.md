@@ -1,947 +1,1191 @@
-###################################################################### 
-**                                                                  **
-**                                                                  **
-######################################################################
-
-```py
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-import os,time,random
-
-
-# TODO contextlib 上下文
-# class Query(object):
-#     def __init__(self, name):
-#         self.name = name   
-#     def __enter__(self):        
-#         print('Begin')        
-#         return self    
-#     def __exit__(self, exc_type, exc_value, traceback):        
-#         if exc_type:            
-#             print('Error')        
-#         else:            
-#             print('End')    
-#     def query(self):        
-#         print('Query info about %s...' % self.name) 
-
-# with Query('Bob') as q:
-#     q.query()
-
-
-# TODO itertools
-# TODO 无线迭代器
-# (1)
-# count(初值=0, 步长=1):count 迭代器会返回从传入的起始参数开始的均匀间隔的数值。
-# count(10): #从10开始无限循环,count 也可以接收指定的步长参数
-
-from itertools import count
-# for n in count(start=0, step=1):
-#     print (n)
-#     if n == 10:
-#         break
-
-# (2)
-# islice(count(10), 5)：从 10 开始，输出 5 个元素后结束。
-# islice 的第二个参数控制何时停止迭代。但其含义并不是”达到数字 5 时停止“，而是”当迭代了 5 次之后停止“
-
-# (3)
-# cycle()会把传入的一个序列无限重复下去
-# repeat()负责把一个元素无限重复下去，不过如果提供第二个参数就可以限定重复次数
-
-# (4)
-# 通过takewhile()等函数根据条件判断来截取出一个有限的序列
-from itertools import takewhile
-# print(list(takewhile(lambda x:x<=10,count(1))))
-
-
-# TODO 可终止迭代器
-
-from itertools import accumulate
-
-# (1)
-# accumulate(可迭代对象[, 函数])
-#  accumulate 迭代器将返回累计求和结果，或者传入两个参数的话，由传入的函数累积计算的结果。默认设定为相加
-# print(list(accumulate(range(5))))
-
-# 迭代器将传入数字依次累加，所以第一个是 0 ，第二个是 0+1， 第三个是 1+2，
-# 如此下去。现在我们导入 operator 模块，然后添加进去
-import operator
-
-# print(list(accumulate(range(1,6),operator.mul)))
-
-# print(list(accumulate([1,2,3,4,5], initial=100)))
-
-
-# (2)
-# chain(*可迭代对象),将多个可迭代对象合并成一个更长的可迭代对象
-from itertools import *
-# print(list(chain(['p','x','e'], ['scp', 'nmb', 'balenciaga'])))
-
-# (3) 
-# 函数返回的迭代器生成元素(key,group)，key是分组的键值，group是迭代器，从而生成组成这个组的所有项目
-# a = ['aa', 'ab', 'abc', 'bcd', 'abcde']
-# for i, k in groupby(a, len):
-#     print (i, list(k))
-
-# TODO collection
-from collections import namedtuple
-# (1)
-Point = namedtuple('point',['x','y'])
-p = Point(1,2)
-print(p.x)
-print(p)
-
-from collections import deque 
-q = deque(['a', 'b', 'c']) 
-q.append('x') 
-q.appendleft('y') 
-print(q) 
-
-
-from collections import defaultdict
-dd = defaultdict(lambda: 'N/A') 
-dd['key1'] = 'abc' 
-print(dd['key1']) # key1存在 'abc' >>> 
-print(dd['key2']) # key2不存在，返回默认值 'N/A'
-
-
-from collections import OrderedDict 
-d = dict([('a', 1), ('b', 2), ('c', 3)]) 
-print(d) # dict的Key是无序的 {'a': 1, 'c': 3, 'b': 2} 
-od = OrderedDict([('a', 1), ('b', 2), ('c', 3)]) 
-print(od) # OrderedDict的Key是有序的 OrderedDict([('a', 1), ('b', 2), ('c', 3)]) 
-# OrderedDict的Key会按照插入的顺序排列，不是Key本身排序
-
-# OrderedDict可以实现一个FIFO（先进先出）的dict，当容量超出限制时，先删除最早添加的Key
-class LastUpdatedOrderedDict(OrderedDict):
-    def __init__(self, capacity): 
-        super(LastUpdatedOrderedDict, self).__init__()       
-        self._capacity = capacity   
-    def __setitem__(self, key, value):        
-        containsKey = 1 if key in self else 0        
-        if len(self) - containsKey >= self._capacity:            
-            last = self.popitem(last=False)            
-            print('remove:', last)        
-        if containsKey:            
-            del self[key]            
-            print('set:', (key, value))        
-        else:            
-            print('add:', (key, value))        
-        OrderedDict.__setitem__(self, key, value) 
-        
-###################################################################### 
-**                                                                  **
-**                                                                  **
-######################################################################
-import re
-import time
-from datetime import datetime
-from decimal import Decimal
-import logging
-import argparse
-import ast
-
-
-# TODO 爬虫
-# def get_html(url):
-#     try:        
-#         kv = {"user-agent": "Mozilla/5.0"}#加上这一句话就行了        
-#         reponse = requests.get(url,headers = kv)#发送请求并得到回应       
-#         reponse.raise_for_status()#查看状态码 如果不是200则执行except        
-#         reponse.encoding = reponse.apparent_encoding#编码方式        
-#         return reponse.text#返回网页内容    
-#     except:        
-#         return "爬取失败"
-
-# if __name__ == '__main__':
-#     url = 'https://www.vmall.com/huawei'
-#     page = get_html(url)
-#     print(page)
-
-
-# TODO 函数参数
-# def value(num):
-#     if num == '1':
-#         return 'IDLE'
-#     else:
-#         return 'OK'
-
-# def myfunc(func,expect_value,**kwargs):
-#     fact_value = func(**kwargs)
-#     print(expect_value)
-#     print(bool(re.search(expect_value,fact_value)))
-
-# myfunc(func=value,expect_value='OK | IDLE',num='1')
-
-
-
-# TODO 二维数组的正确写法
-# num_list = [ [0]*5 ]*2  # error
-# num_list = [ [0] * 5 for i in range(2)]   # right
-
-# #  获取list特定元素下标
-# # 仅仅能获取都第一个匹配的value的下标
-# a=[72, 56, 76, 84, 80, 88,76]
-# print(a.index(76))
-
-# # 利用enumerate函数
-# print(list(enumerate(a)))  # tuple 
-# print [i for i,x in enumerate(a) if x == 76]
-
-
-# TODO 'and or'
-# and中含0，返回0； 均为非0时，返回后一个值， 
-2 and 0   # 返回0
-2 and 1   # 返回1
-1 and 2   # 返回2
-
-# or中， 至少有一个非0时，返回第一个非0,
-2 or 0   # 返回2
-2 or 1   # 返回2
-0 or 1   # 返回1 
-
-
-# TODO "遍历文件夹"
-# import os
-# path = 'D:\iTest\HuangLiang_Scripts'   #获取当前路径
-# count1,count2 = 0,0
-# for root,dirs,files in os.walk(path): 
-#     fileAndDirTuples = []   #遍历统计
-#     for each in files:
-#         count1 += 1   #统计文件夹下文件个数
-#         fileAndDirTuples.append((each, root))
-#     for folder in dirs:
-#         count2 += 1
-    
-# print count1/2,count2,count1/2-count2       
-
-
-# TODO "datetime"
-# mystr4 ='2020-04-08 17:28:49'
-# mystr5 ='2020.04.08.18.28.50'
-# dt = datetime.strptime(mystr4[:19],"%Y-%m-%d %H:%M:%S")
-
-# t2 = datetime.strptime(mystr5,"%Y.%m.%d.%H.%M.%S")
-# t3 = datetime.now()
-
-# print type((dt-t2).total_seconds())
-
-# temp_list = ' '.join('010100010').split(' ')
-# online_count = temp_list.count('1')
-# print (online_count)
-
-
-
-
-# TODO "staticmethod classmethod"
-# class A(object):
-#     a = 'a'
-#     @staticmethod
-#     def foo1(name):
-#         print 'hello', name
-#         print A.a # 正常
-#         # print A.foo2('mamq') # 报错: unbound method foo2() must be called with A instance as first argument (got str instance instead)
-#     def foo2(self, name):
-#         print 'hello', name
-#     @classmethod
-#     def foo3(cls, name):
-#         print 'hello', name
-#         print A.a
-#         print cls().foo2(name)
-
-
-
-# list_a = [None,None,12]
-# ret = filter(None, list_a)[0]
-# print(ret)
-
-
-# TODO "Decorators"
-# def dec(func):
-#     print "call dec"
-#     def in_dec():
-#         print "call in_dec"
-#         func()
-#     return in_dec      
-
-# @dec
-# def test_dec():
-#     print "call test_dec"
-
-# print type(test_dec)
-# test_dec()
-
-
-
-# TODO "__iter__"
-# class Sentence():
-#     def __init__(self,text):
-#         self.text = text
-#         self.words = re.findall(text,'\w+')
-#     def __repr__(self):
-#         return "Sentence:%s" % self.text
-#     def __iter__(self):
-#         return (match.group() for match in re.finditer(self.text,'\w+'))
-#         # for i in self.words:
-#         #     yield i
-#         # return
-
-# t = Sentence('I have a apple')
-# print(t)
-# for i in t:
-#     print (i)
-
-
-# import reprlib
-# import re
-
-# reword=re.compile('\w+')
-# #第三版：生成器表达式
-# class Sentence:
-#     def __init__(self,text):
-#         self.text=text
-#     def __repr__(self):
-#         return "Sentence(%s)" % self.text
-#     def __iter__(self):
-#         return (match.group() for match in reword.finditer(self.text))
-# title=Sentence('We have a dream!')
-# print(title)
-# for i in title:
-#     print(i)
-
-
-# TODO  "实现switch_case的功能"
-# def login():
-#     '''登录'''
-#     print('登录成功')
-
-# def registry():
-#     '''注册'''
-#     print('注册成功')
-
-# func = {
-#     '0':('退出',None),
-#     '1':('登录',login),
-#     '2':('注册',registry),
-# }
-# while True:
-#     for i in func:
-#         print(i,func[i][0])
-#     choice = input('请输入您要执行的操作编号：').strip()
-#     if choice == '0':
-#         break
-#     elif choice not in func:
-#         print('尊敬的用户，您好！你需要执行的操作不存在，请重新选择操作编号!')
-#         continue
-#     else:
-#         func[choice][1]()
-
-
-# TODO "getattr的使用"
-# class My_Func():
-#     def __init__(self):
-#         pass
-#     def print_A(self):
-#         print('------A')
-#     def print_B(self):
-#         print('------B')
-#     def print_C(self):
-#         print('------C')
-#     def dispatch(self,value):
-#         method_name = 'print_' + str(value)
-#         method = getattr(self,method_name)
-#         method()
-
-# S = My_Func()
-# S.dispatch('A')
-# S.dispatch('B')
-
-# class Base():
-#     init = False
-
-#     @classmethod
-#     def set_init(cls):
-#         cls.init = True    # 传入的是Derived类，给Derived添加了成员,Derived的init和Base的init不是同一个属性
- 
-
-#     # @staticmethod
-#     # def set_init():
-#     #     Base.init = True
-
-# class Derived(Base):
-#     pass
-
-# print('-------------')
-
-# Derived.set_init()
-# print(Derived.init)
-# print(Base.init)
-# print(id(Derived.init))
-# print(id(Base.init))
-
-# class Dept(object):
-
-#       def __init__(self, name):
-#           self.name = name
-
-#       # target是拥有此属性的对象
-#       def __get__(self, target, type=None):
-#         # 默认返回self与obj都可以
-#         return 'Hello'
-
-# class Company(object):
-#     #   一定要作为类属性，作为实例属性无效
-#     dept = Dept('organ')
-
-# # 现在的测试结果
-# x = Company()
-# #   返回True
-# print (x.dept)
-
-# def my_partial(func,*args,**kwargs):
-#     def newfunc(*fargs,**fkwargs):
-#         newkwargs = {**kwargs,**fkwargs}
-#         return func(*args,*fargs,**newkwargs)
-#     newfunc.func = func
-#     newfunc.args = args
-#     newfunc.kwargs = kwargs
-#     return newfunc
-
-# from functools import partial
-# basetwo = partial(int,base=16)
-
-# print(basetwo('12'))
-
-# def fn(self,name='world'):
-#     print('hello,%s' % name)
-
-# Hello = type('hello',(object,),dict(hello=fn))
-
-# h = Hello()
-# h.hello()
-# print(type(Hello))
-# print(type(h))
-# print(type(h.hello))
-
-# class ListMetaclass(type):
-#     def __new__(cls,name,bases,attrs):
-#         attrs['add'] = lambda self,value:self.append(value)
-#         return type.__new__(cls,name,bases,attrs)
-
-# class MyList(list, metaclass=ListMetaclass):
-#     pass
-
-# L = MyList()
-# L.add(1)
-# print(L)
-
-
-# class ModelMetaclass(type):
-#     def __new__(cls,name,bases,attrs):
-#         if name == 'Model':
-#             return type.__new__(cls,name,bases,attrs)
-#         print('Found model:%s' % name)
-#         mappings = dict()
-#         for k,v in attrs.items():
-#             if isinstance (v,Field):
-#                 print('Found Mapping: %s ==> %s' % (k,v))
-#                 mappings[k] = v
-#         for k in mappings.keys():
-#             attrs.pop(k)
-#         attrs['__mappings__'] = mappings
-#         attrs['__table__'] = name
-#         return type.__new__(cls,name,bases,attrs)
-
-# class Model(dict,metaclass=ModelMetaclass):
-#     def __init__(self,**kw):
-#         super(Model,self).__init__(**kw)
-#     def __getattr__(self,key):
-#         try:
-#             return self[key]
-#         except KeyError:
-#             raise AttributeError(r"'Model' object has no attribute '%s'" % key)
-#     def __setattr__(self,key,value):
-#         self[key] = value
-#     def save(self):
-#         fields = []
-#         params = []        
-#         args = []        
-#         for k, v in self.__mappings__.items():
-#             fields.append(v.name)
-#             params.append('?') 
-#             args.append(getattr(self, k, None))        
-#         sql = 'insert into %s (%s) values (%s)' % (self.__table__, ','.join(fields), ','.join(params))        
-#         print('SQL: %s' % sql)        
-#         print('ARGS: %s' % str(args)) 
-
-# class Field(object):
-#     def __init__(self,name,column_type):
-#         self.name = name
-#         self.column_type = column_type
-#     def __str__(self):
-#         return '<%s:%s>' % (self.__class__.__name__,self.name)
-
-# class StringField(Field):
-#     def __init__(self,name):
-#         super(StringField,self).__init__(name,'varchar(100)')
-
-# class IntegerField(Field):
-#     def __init__(self,name):
-#         super(IntegerField,self).__init__(name,'bigint')
-
-# class User(Model):
-#     # 定义类的属性到列的映射：
-#     id = IntegerField('id')
-#     name = StringField('username')
-#     email = StringField('email')
-#     password = StringField('password')
-
-# u = User(id=12345, name='Michael', email='test@orm.org', password='my-pwd') 
-# u.save() 
-
-
-
-# def normalize(params_info):
-#     """
-#     字典解析，前端字典解析为后端字典
-#     :param params_info:
-#     :return:
-#     """
-#     params_info_filter = {}
-#     for info in params_info:
-#         key = info.pop('field')
-#         params_info_filter[key] = info
-#     if "pool_size" not in params_info_filter:
-#         params_info_filter["pool_size"] = {"help": "connect pool size", "type": int, "default": 10}
-#     parser = argparse.ArgumentParser(description='Process some integers.')
-#     if isinstance(params_info_filter, dict):
-#         for key, value in params_info_filter.items():
-#             item_key = '--' + key
-#             if value['type'] == bool or value['type'] == list or value['type'] == dict:
-#                 value['type'] = ast.literal_eval
-#             parser.add_argument(item_key, **value)
-#         task_id = {"help": "任务号，web发起请求任务的编号", "type": str, "default": ''}
-#         w3 = {"help": "w3账号", "type": str, "default": ''}
-#         parser.add_argument("--task_id", **task_id)
-#         parser.add_argument("--w3", **w3)
-#     args = parser.parse_args()
-#     return args
-
-# params_info = [
-#     # 必传参数
-#     # ip: 设备ip，username: 设备登录账号，password: 设备登录密码，device_type: 设备是阵列还是主机
-#     {"field": "devices", "help": "配置设备的参数", "type": list, "default":
-#         [{"ip": "10.183.165.136", "username": "root", "password": "huawei", "device_type": "host"},
-#          {"ip": "51.38.57.52", "username": "admin", "password": "Admin@storage", "device_type": "controller"}]},
-#     # 自定义参数
-#     {"field": "filename", "help": "设置脚本名称（默认为文件名）", "type": str, "default": ''},
-#     {"field": "pool_size", "help": "connect pool size", "type": int, "default": 10},
-#     {"field": "self_defined", "help": "self_defined", "type": bool, "default": 1, "choices": [True, False]},
-# ]
-# params = normalize(params_info)
-# print(params)
-
-
-# from collections import namedtuple
-
-# User = namedtuple('User',['name','sex','age'])
-
-# user_1 = User(name= 'Jack',sex='male',age=20)
-# print(user_1)
-# print(user_1._fields)
-# user_2 = User._make(['Mary','female',10])
-# print(user_2)
-# print(user_1.name)
-# user_1._replace(name='new_jack')
-# print(user_1.name)
-# print(user_1._asdict())
-
-users = {"tom": 1, "jenny": 2, "jack": 3, "andrew": 4}
-print(sorted(users.keys(), key=lambda user: users.get(user) or float('inf')))
-
-
-import  typing
-def add_ellipsis_gen(comments: typing.Iterable[str], max_length: int = 12):
-    """如果可迭代评论里的内容超过 max_length，剩下的字符用省略号代替
-    """
-    for comment in comments:
-        comment = comment.strip()
-        if len(comment) > max_length:
-            yield comment[:max_length] + '...'
+# TODO 速记
+'''
+def unzip_string(records):
+    curr,temp,stack = '','',[]
+    for i,char in enumerate(records):
+        if char == '(':
+            stack.append(curr)
+            curr =''
+        elif char == ')':
+            repeat_num = records[i+2]
+            curr = stack.pop() + curr*int(repeat_num)
+        elif char == '<' or char == '>' or char.isdigit():
+            continue
         else:
-            yield comment
+            curr += char
+    return curr
+
+print(unzip_string('a(b(cd)<3>e)<2>f'))
+'''
+
+# def isValid(s): 
+#     parentheses_table = {'(':')','[':']','{':'}'}
+#     temp_stack = []
+
+#     if len(s) % 2 == 1 or len(s) == 0:
+#         return False
+#     for char in s:
+#         if char in parentheses_table.keys():
+#             temp_stack.append(char)
+#         else:
+#             if not temp_stack:
+#                 return False
+#             if parentheses_table[temp_stack.pop()] != char:
+#                 return False
+
+#     return bool(temp_stack == [])
+
+# print(isValid("(]"))
+
+# from typing import List
+# from collections import defaultdict
+# class Solution:
+#     def singleNumber(self, nums: List[int]) -> int:
+#         hash_table = defaultdict(int)
+#         for i in nums:
+#             hash_table[i] += 1
+        
+#         for i in hash_table:
+#             if hash_table[i] == 1:
+#                 return i
+
+# s =Solution()
+# print(s.singleNumber([4,1,2,1,2]))
 
 
-comments = ("Implementation note", "Changed", "ABC for generator")
-print("\n".join(add_ellipsis_gen(comments)))
+# -*- coding: utf-8 -*-
+# import hashlib, random
+
+# def get_md5(s):
+#     return hashlib.md5(s.encode('utf-8')).hexdigest()
+
+# class User(object):
+#     def __init__(self, username, password):
+#         self.username = username
+#         self.salt = ''.join([chr(random.randint(48, 122)) for i in range(20)])
+#         self.password = get_md5(password + self.salt)
+
+# db = {
+#     'michael': User('michael', '123456'),
+#     'bob': User('bob', 'abc999'),
+#     'alice': User('alice', 'alice2008')
+# }
+
+# def login(username, password):
+#     user = db[username]
+#     return user.password == get_md5(password+user.salt)
+
+# # 测试:
+# assert login('michael', '123456')
+# assert login('bob', 'abc999')
+# assert login('alice', 'alice2008')
+# assert not login('michael', '1234567')
+# assert not login('bob', '123456')
+# assert not login('alice', 'Alice2008')
+# print('ok')
+
+# import os, sqlite3
+
+# db_file = os.path.join(os.path.dirname(__file__), 'test.db')
+# if os.path.isfile(db_file):
+#     os.remove(db_file)
+
+# # 初始数据:
+# conn = sqlite3.connect(db_file)
+# cursor = conn.cursor()
+# cursor.execute('create table user(id varchar(20) primary key, name varchar(20), score int)')
+# cursor.execute(r"insert into user values ('A-001', 'Adam', 95)")
+# cursor.execute(r"insert into user values ('A-002', 'Bart', 62)")
+# cursor.execute(r"insert into user values ('A-003', 'Lisa', 78)")
+# cursor.close()
+# conn.commit()
+# conn.close()
+
+# def get_score_in(low, high):
+#     ' 返回指定分数区间的名字，按分数从低到高排序 '
+#     conn = sqlite3.connect(db_file)
+#     cursor = conn.cursor()
+#     cursor.execute('select * from user where score between ? and ?', (low,high))
+#     values = cursor.fetchall()
+#     ret = []
+#     for info in values:
+#         ret.append(info[1])
+#     return ret
+
+# print(get_score_in(60, 95))
+
+# # 测试:
+# assert get_score_in(80, 95) == ['Adam'], get_score_in(80, 95)
+# assert get_score_in(60, 80) == ['Bart', 'Lisa'], get_score_in(60, 80)
+# assert get_score_in(60, 100) == ['Bart', 'Lisa', 'Adam'], get_score_in(60, 100)
+
+# print('Pass')
+
+# from selenium import webdriver
+# browser = webdriver.Firefox()
+# browser.get('https://www.baidu.com')
 
 
+# import collections
+# Card = collections.namedtuple('Card', ['rank', 'suit'])
+
+# class FrenchDeck:
+#     ranks = [str(n) for n in range(2, 11)] + list('JQKA')
+#     suits = 'spades diamonds clubs hearts'.split()
+
+#     def __init__(self):
+#         self._cards = [Card(rank, suit) for suit in self.suits for rank in self.ranks]
+
+#     def __len__(self):
+#         return len(self._cards)
+
+#     def __getitem__(self, position):
+#         return self._cards[position]
+
+# f = FrenchDeck()
+# print(len(f))
+# print(f[1])
+
+import re
+# # 将匹配的数字乘以 2
+# def double(matched):
+#     value = int(matched.group())
+#     print(value)
+#     return str(value * 2)
+# s = 'A23G4HFD567'
+# res = re.sub(r'(\d+)', double, s)
+# print(res)
 
 
-###################################################################### 
-**                                                                  **
-**                                                                  **
-######################################################################
+# def dashrepl(matchobj):
+#     if matchobj.group(0) == '-': 
+#         return ' '
+#     else: 
+#         return '-'
+# print(re.sub('-{3,4}', dashrepl, 'pro----gram-files'))
 
-# TODO  枚举类
-# import re
-
-# from enum import Enum
-
-# class Color(Enum):
-#     YELLOW =1
-#     RED =2
-#     GREEN =3
-
-# print(Color.YELLOW)
-# print(Color.YELLOW.value)
-# print(Color(1))
-# print(type(Color(1)))
+# s = re.match(r'^\d{3}-\d{3,8}', '010-12345qwe')
+# print(s.group(0))
 
 
-
-# TODO  @property 变方法为属性
-
-# class Student():
-#     def __init__(self,name,age=18):
-#         self.name =name
-#         self.__age =age    #age属性外部不能访问  _Student__age
-
-#     @property              #定义只读属性
-#     def age(self):
-#         return self.__age
-
-#     @age.setter
-#     def age(self,age):
-#         if age < 18 :
-#             print('age must greater than 18')
-#             return 
-#         else :
-#             self.__age =age
-#             return self.__age
-
-#     def __call__(self):
-#         print('%s age is %s' %(self.name, self.__age))
+# def pemute(n,my_list,cur):
+#     if cur == n:
+#         print(my_list[0:n])
     
-# stu=Student("Xiaoming",20)
-# print(stu.age)
-# stu.age = 10
-# print(stu.age)
-# stu.age = 30
-# print(stu.age)
-# print(stu())
-# print(dir(stu))
+#     for i in range(1,n+1):
+#         ok = True
+#         for j in range(cur):
+#             if my_list[j] == i:
+#                 ok = False
+#         if ok:
+#             my_list[cur] = i
+#             pemute(n,my_list,cur+1)
 
-# TODO  函数身为一个对象，拥有对象模型的三个通用属性：id、类型、和值。
-# def foo():
-#     print('from foo')
-# foo()
-
-# print(id(foo))
-# print(type(foo))
-# print(foo)
-
-# fun =foo()
-# print(id(fun))
-# print(type(fun))
-# print(fun)
+# list1 = [0]*10
+# pemute(3,list1,0)
 
 
-# TODO  函数嵌套
-# def f1():
-#     def f2():
-#         print('from f2')
-#         def f3():
-#             print('from f3')
-#         print('before f3')    
-#         f3()
-#         print('after f3')    
-#     print('before f2')
-#     f2()
-#     print('after f2')
-
-# f1()
-
-# # 函数可以作返回值
-# def foo(str):
-#     print('from foo %s' %str)
-# def bar(func):
-#     return func     
-
-# f=bar(foo)
-# print(f)
-# f('test')
-# bar(foo('test'))
+class Node:
+    def __init__(self,key,value,prev=None,Next=None):
+        self.key = key
+        self.value = value
+        self.prev = prev
+        self.next = next
+    
+    def __repr__(self):
+        return self.value
 
 
-# TODO 4.1 与None作比较要使用“is”或“is not”，不要使用等号 
-# class Bad(object):
-#     def __eq__(self, other):        
-#         return True 
+class LinkedList:
+    def __init__(self):
+        self.head = Node(None,'Head')
+        self.tail = Node(None,'Tail')
+        self.head.next =self.tail
+        self.tail.prev = self.head
+    
+    # 添加至tail前
+    def append(self,node):
+        node.prev = self.tail.prev
+        node.next = self.tail
+        node.prev.next = node
+        self.tail.prev = node
 
-# print(Bad() == None)   # ==操作会调用左操作数的__eq__函数，而这个函数可以被其任意定义
-# print(Bad() is None) 
+    def delete(self,node):
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    
+    def get_head(self):
+        return self.head.next
+
+class LRU:
+    def __init__(self,capity=100):
+        self.capity =capity
+        self.map = {}
+        self.linked_list = LinkedList()
+
+    def get(self,key):
+        if key not in self.map:
+            return None
+        self.linked_list.delete(self.map[key])
+        self.linked_list.append(self.map[key])
+        return self.map[key]
+
+    def put(self,key,value):
+        # key已在map中则删除已存在的value并更新，添加到最后
+        if key in self.map:
+            self.linked_list.delete(self.map[key])
+            self.linked_list.append(Node(key,value))
+            return
+        if len(self.map) >= self.capity:
+            first_node = self.linked_list.get_head()
+            self.linked_list.delete(first_node)
+            del self.map[first_node.key]
+        
+        new_node = Node(key,value)
+        self.linked_list.append(new_node)
+        self.map[key] = new_node
+
+
+# lru = LRU(4)
+# lru.put('zhangsan','he likes food')
+# lru.put('lisi','he likes mobile')
+# lru.put('wangwu','he likes game')
+# lru.get('lisi')
+# lru.put('zhaoliu','he likes basketball')
+# lru.put('huangqi','he likes football')
+# lru.put('wangwu','he also likes shopping')
+
+
+# from collections import OrderedDict
+# class LRU2(OrderedDict):
+#     def __init__(self,cap=128,/,*args,**kwds):
+#         self.cap = cap
+#         super().__init__(*args,**kwds)
+    
+#     def __setitem__(self,key):
+#         value = super().__getitem__(key)
+#         self.move_to_end(key,last=True)
+#         return value
+
+#     def __getitem__(self,key,value):
+#         super().__setitem__(key,value)
+#         if len(self) > self.cap
+#             oldest = next(iter(self))
+#             del self[oldest]
 
 
 
-# TODO  staticmethod classmethod
-# 方法不需要访问任何成员，或者只需要显式访问这个类自己的成员。这样的方法不需要额外参数，应当用 @staticmethod装饰。
-# 方法不需要访问实例的成员，但需要访问基类或派生类的成员。这时应当用@classmethod装饰。装饰后的方法，其第一个参数不再传入实例，而是传入调用者的底层类 
-# 使用@classmethod时需要注意，由于在继承场景下传入的第一个参数并不一定是这个类本身
-# 因此并非所有访问类成员的场景都应该用@classmethod
+# import logging
+# import sys
+# import os
 
-# class Base():
-#     init = False
-#     # @classmethod
-#     # def set_init(cls):
-#     #     cls.init = True    # 传入的是Derived类，给Derived添加了成员,Derived的init和Base的init不是同一个属性
- 
+
+# logger = logging.getLogger('lance')
+# logger.setLevel(logging.DEBUG)
+# fmt = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s','%Y-%m-%D %H:%M:%S')
+
+
+
+class Bunch(dict):
+    def __init__(self, kwargs=None):
+        if kwargs is None:
+            kwargs = {}
+        for key, value in kwargs.items():
+            kwargs[key] = self.bunchify(value)
+        super(Bunch, self).__init__(kwargs)
+        self.__dict__ = self
+
+    @classmethod
+    def bunchify(cls, obj):
+        print(obj)
+        if isinstance(obj, (list, tuple)):
+            return [cls.bunchify(item) for item in obj]
+        if isinstance(obj, dict):
+            return cls(obj)
+        return obj
+
+# data = Bunch.bunchify(str)
+# data['status_code'] = '200'
+
+# print(data)
+
+# class AttrDict(dict):
+#     def __init__(self, *args, **kwargs):
+#         super(AttrDict, self).__init__(*args, **kwargs)
+#         self.__dict__ = self
 
 #     @staticmethod
-#     def set_init():
-#         Base.init = True
+#     def fromDict(d):
+#         return AttrDict.recursion(d)
 
-# class Derived(Base):
-#     pass
-
-# print('-------------')
-
-# Derived.set_init()
-# print(Derived.init)
-# print(Base.init)
-# print(id(Derived.init))
-# print(id(Base.init))
+#     @staticmethod
+#     def recursion(x):
+#         if isinstance(x, dict):
+#             return AttrDict((k, bunchify(v)) for k, v in x.items())
+#         else:
+#             return x
 
 
 
+# N = [1]
+# for i in range(10):
+#     print(N)
+#     N.append(0)
+#     tmp = []
+#     for j in range(i + 2):
+#         tmp.append(N[j - 1] + N[j])
+#     N = tmp
 
-# TODO 继承
-# 如果子类(Puple)继承父类(Person)不做初始化，那么会自动继承父类(Person)属性name。
-# 如果子类(Puple_Init)继承父类(Person)做了初始化，且不调用super初始化父类构造函数，那么子类(Puple_Init)不会自动继承父类的属性(name)。
-# 如果子类(Puple_super)继承父类(Person)做了初始化，且调用了super初始化了父类的构造函数，那么子类(Puple_Super)也会继承父类的(name)属性
+# from urlparse import urljoin
+# print(urljoin('https://170.34.5.120/redfish/v1/', '/redfish/v1/Systems'))
 
-# class Father(object):    
-#     def __init__(self, age):        
-#         self.age=age        
-#         print ( "age: %d" %( self.age) )    
-#     def getAge(self):        
-#         print('Father return ')        
-#         return self.age 
+# import logging
+# import sys
+# import os
+# # 初始化logger
+# logger = logging.getLogger("yyx")
+# logger.setLevel(logging.DEBUG)
+# # 设置日志格式
+# fmt = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+# # 添加cmd handler
+# cmd_handler = logging.StreamHandler(sys.stdout)
+# cmd_handler.setLevel(logging.DEBUG)
+# cmd_handler.setFormatter(fmt)
+# # 添加文件的handler
+# logpath = os.path.join(os.getcwd(), 'debug.log')
+# file_handler = logging.FileHandler(logpath)
+# file_handler.setLevel(logging.DEBUG)
+# file_handler.setFormatter(fmt)
+# # 将cmd和file handler添加到logger中
+# logger.addHandler(cmd_handler)
+# logger.addHandler(file_handler)
+# logger.debug("今天天气不错")
 
-# class Son(Father):  
-#     def __init__(self,age):
-#        # Father.__init__(self,age)
-#        # super(子类名，self).__init__(父类属性)， 其中在子类初始化函数中要将父类的__init__函数中的父类属性全部包含进来
-#         super(Son,self).__init__(age)
-#         print("hello")  
-#     def getAge(self):        
-#         print('Son return')        
-#         return self.age
+# from typing import List
+# def get_sum(row:int,col:int,noise:List[List[int]]) ->int:
+#     result = 0
+#     grid = [[0] * col for i in range(row)]
+#     for i in range(row):
+#         for j in range(col):
+#             for k in range(len(noise)):
+#                 max_interval = max(abs(noise[k][0]-i),abs(noise[k][1]-j))
+#                 grid[i][j] = max(grid[i][j],max(noise[k][2]-max_interval,0))
+#             result += grid[i][j]
+#         print(grid[i])
+#     print(result)
 
-# son=Son(18)
-# print ( son.getAge() )
+# def get_sum2(row:int,col:int,noise:List[List[int]]) ->int:
+#     result = 0
+#     grid = [[0] * col for i in range(row)]
 
-# python 类的继承
-"""
-（1）：直接调用父类属性方法；
-（2）：重写父类属性方法；
-        子类没有重写父类的方法，当调用该方法的时候，会调用父类的方法，当子类重写了父类的方法，默认是调用自身的方法。
-        另外，如果子类Son重写了父类Father的方法，如果想调用父类的action方法，可以利用super().func() # func()为父类方法
-（3）：强制调用父类私有属性方法； 编译器是把这个方法的名字改成了 _Father__func()
-（4）：调用父类的__init__方法
-        如果自己也定义了 __init__ 方法,那么父类的属性是不能直接调用的，会报错
-        修改方法：可以在 子类的 __init__中调用一下父类的 __init__ 方法,这样就可以调用了
-（5）：继承父类初始化过程中的参数
-原文链接：https://blog.csdn.net/yilulvxing/article/details/85374142
-"""
-
-# TODO  局部变量 
-# https://blog.csdn.net/HappyRocking/article/details/80115241
-# company = 'ali'  # 全局变量      
-# def change_name(name):
-#     global company         # company 提升为全局变量 
-#     company = 'tengxu'    # 局部变量
-#     print("befor change", name, company)
-#     name = 'zhangsan'  # 这个函数就是这个变量的作用域
-#     print("after change", name)      
-# print('company: ', company)   # 执行查看函数调用前打印的情况
-# name = 'lisi'
-# change_name(name)
-# print(name)
-# print('company: ', company)   # 执行查看函数调用后打印的情况 company值已改变为tengxun
-
-
-# company = 'ali'  # 全局变量
-# names = ['zhangsan', 'sili', 'wangwu']  
-# def change_name():
-#     names[0] = 'wwwww'
-#     print("inside_func: ", names)          # 运行查看执行结果    
-# change_name()
-# print('ouside_func：', names)   # 运行查看执行结果
-
-
-
-# TODO 类的高级函数
-
-# https://blog.csdn.net/yiifaa/article/details/78068962?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase
-# python总结(五)：__get__、__getattr__、__getitem__、__getattribute__之间的差异与联系
-# https://blog.csdn.net/weixin_38729390/article/details/86755682?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-8.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-8.nonecase
-# Python中的__get__ __getattr__ __getattribute__
-
-# class Test_A(object):
-#     def __init__(self,name):
-#         self.name = name
-#     def __str__(self):
-#         return 'Name:%s' %self.name
-#     def __repr__(self):
-#         return 'Name:%s' %self.name
-# print(Test_A('Jack'))
-
-# 想要被for循环迭代，这个类就要有__iter__(),返回一个迭代对象
-# for就会不断调用该调用这个迭代对象的__next__()方法拿到返回的值，然后继续调用next方法继续返回值，直到StopIteration退出循环
-# 执行书顺序为： __init__  __iter__ __next__  print __next__ print __next__ ...
-# class Fib(object):
-#     def __init__(self):
-#         self.a,self.b = 0,1
-#     def __iter__(self):
-#         return self
-#     def __next__(self):
-#         self.a,self.b =self.b,self.a+self.b
-#         if self.a > 20:
-#             raise StopIteration
-#         return self.a
-
-# for n in Fib():
-#     print(n)
-
-
-# 像list一样切片
-# class Slice(object):
-#     def __getitem__(self,n):
-#         if isinstance(n,int):
-#             a,b =0,1
-#             for x in range(n):
-#                 a,b =b,a+b
-#             return a
-#         if isinstance(n,slice):
-#             start = n.start
-#             stop = n.stop
-#             if start is None:
-#                 start =0
-#             a,b =0,1
-#             L = []
-#             for x in range(stop):
-#                 if x >= start:
-#                     L.append(a)
-#                 a,b =b,a+b
-#             return L
-
-# f=Slice()
-# print(f[0])
-# print(f[0:5])
-
-
-# TODO 爬虫入门 装饰器 偏函数 生成器
-# https://blog.csdn.net/Appleyk/article/details/78070098
-# https://blog.csdn.net/Appleyk/article/details/77412961
-# https://blog.csdn.net/Appleyk/article/details/77609114
-# https://blog.csdn.net/mieleizhi0522/article/details/82142856/
-# https://www.cnblogs.com/coder2012/p/4990834.html
-
-
-def clean():
-    print('-----Clean:-----') 
-
-def handler(clean_func):
-    def decorator(func):
-        print('装饰器内部--------------')
-        def warper(*args,**kwargs):
-            func(*args,**kwargs)
-            print('-----%s exectue finished-----' % func.__name__)
-            return clean_func()
-        return warper
-    return decorator   
-
-
-# 相当于 handler(clean)(f) 是一个函数
-# 装饰器不传入参数时  ,f = handler(函数名)
-# 装饰器传入参数时,f = handler(参数)(函数名)
-
-@handler(clean)
-def run(info):
-    print('-----Run:%s-----' % info)
-
-
-print('-----before-----')
-run('123')
-print('-----after-----')
-
-
-# import operator
-
-# def accumulate(iterable, func=operator.add, *, initial=None):
-#     it = iter(iterable)
-#     total = initial
-#     if initial is None:
-#         try:
-#             total = next(it)
-#         except StopIteration:
+#     def dfs(n,m,value):
+#         if n < 0 or n > row-1 or m <0 or m > col-1 or grid[n][m] >= value or value == 0:
 #             return 
-#     yield total
-#     for element in it:
-#         total = func(total,element)
-#         yield total
+#         grid[n][m] = value
+#         for i in [-1,0,1]:
+#             for j in [-1,0,1]:
+#                 if i == 0 and j ==0:
+#                     continue
+#                 dfs(n+i,m+j,value-1) 
 
-# print(list(accumulate(range(1,6),operator.mul)))
+#     for k in range(len(noise)):
+#         dfs(noise[k][0],noise[k][1],noise[k][2])
 
-# TODO 必需在函数体内部,并且是赋值操作，使用append 方法之类不成立 只是循环语句不是函数也不适用一下情况
-# 如果使用global关键字声明变量为全局变量，则直接使用全局变量进行读取和写入，无歧义
-# 如果没有global关键字对全局变量的声明，则分2种情况：
-# a.如果函数体内没有对全局变量名赋值操作，则直接读取全局变量值使用，没有问题
-# b.如果函数体内有对全局变量名的赋值操作，则编译器会认为赋值处定义了局部变量，并且绑定此变量名到此局部变量，并影响整个函数体内的相同变量名。
-# 这样一来，如果在赋值操作前进行了全局变量名使用则会报错“UnboundLocalError: local variable 'use_width' referenced before assignment”。
-# 解决：此时必须将赋值操作放在函数内此变量使用前，或者在函数开头使用global引入全局变量来进行读取使用，具体操作根据实际业务逻辑需求确定。
+#     for i in range(row):
+#         for j in range(col):
+#             if grid[i][j]:
+#                 result += grid[i][j]
+#         print(grid[i])
+#     print(result)
+# # get_sum(6,6,[[3,4,3],[1,1,4]])
+# # get_sum2(5,6,[[3,4,3],[1,1,4]])
 
-# ret = []
-# tmp = {}
+# import collections
+# def get_sum3(n: int, m: int, noise: List[List[int]]) -> int:
+#     directions = [[-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1]]
+#     trange = [[0] * m for i in range(n)]
 
-# for i in range(3):
-#     tmp['A'] = 10*i
-#     tmp['B'] = 100*i
-#     print(id(tmp))
-#     ret.append(tmp)
-#     print(id(ret))
+#     def bfs(i, j, value):
+#         deque = collections.deque()
+#         deque.append((i, j, value))
+#         while len(deque) != 0:
+#             size = len(deque)
+#             while size > 0:
+#                 point = deque.pop()
+#                 for value in directions:
+#                     x_c = point[0] + value[0]
+#                     y_c = point[1] + value[1]
+#                     value = point[2]
+#                     if x_c < 0 or x_c >= n or y_c < 0 or y_c >= m or value <= trange[x_c][y_c]:
+#                         continue
+#                     if value > trange[x_c][y_c]:
+#                         trange[x_c][y_c] = value
+#                         if value != 1:
+#                             deque.appendleft((x_c, y_c, value - 1))
+#                 size = size - 1
 
-# print(ret)
+#     for value in noise:
+#         if value[2] <= trange[value[0]][value[1]]:
+#             continue
 
-# ret = {}
-# def func():
-#     for i in xrange(3):
-#         print(ret)
-#         # ret ={'C':5}
-#         ret['A'] = i
-#         ret['B'] = i*10
-#     print(ret)
-# func()
+#         trange[value[0]][value[1]] = value[2]
 
-# TODO python小特性：is和==、变量的内存管理、小整数对象池、intern机制
-# https://blog.csdn.net/weixin_44571270/article/details/105736076?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-4.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-4.nonecase
-# https://blog.csdn.net/dogpig945/article/details/81363494
-# https://www.zhihu.com/question/20114936
+#         if value[2] != 1:
+#             bfs(value[0], value[1], value[2] - 1)
 
-
-# import pprint,json
-# info = {'AlarmObj': 'INTF_MODULE', 'AlarmID': '0xf00d10049', 'Num': 'NO.0768', 'AlarmMsg': 'Interface module ([FrameType:1 Controller Enclosure], [PhyType:ETH], [ServiceType:0] interface module [BoardID:0x98]) is not inserted into the recommended slot. The recommended slot number list is ([SlotIDList:0xa000000]).', 'Time': '2020-06-18 16:21:39', 'AlarmType': 'fault'}
-
-# # print(json.dumps(info,indent=4, ensure_ascii=False))
-# pprint.pprint(info)
-
-
-
-
-
-
+#     res = 0
+#     for i in range(n):
+#         for j in range(m):
+#             res += trange[i][j]
+#         print(trange[i])
+#     print(res)
 
 
+def threeSum(nums):
+    nums.sort()
+    ret = []
+    for i in range(len(nums)):
+        if nums[i] > 0:
+            continue
+        if i != 0 and nums[i] == nums[i-1]:
+            continue
+        two_sum = 0 - nums[i]
+        map = {}
+        tmp_set =()
+        for j in range(i+1,len(nums)):
+            if j > i + 2 and nums[j] == nums[j-1] and nums[j-1] == nums[j-2]:
+                continue
+            if two_sum - nums[j] in map:
+                ret.append([nums[i],two_sum - nums[j],nums[j]])
+                map.pop(two_sum - nums[j])
+            map[nums[j]] = j
+    print((ret))
 
-```
+threeSum([-2,0,0,2,2])
+
+from collections import Counter
+def countCharacters(words, chars):
+    count = Counter(chars) 
+    res = 0
+    for w in words:
+        In = True
+        for c in w:
+            if w.count(c) > count[c]:
+                # print('%s:%d' %(c,count[c]))
+                In = False
+                break
+        if In:
+            res += len(w)
+    print(res)
+
+countCharacters(["bt","cat","hat","tree"],"atach")
+
+
+def partitionLabels(S):
+    lindex = {c: i for i, c in enumerate(S)}
+    j = anchor = 0
+    ans = []
+    for i, c in enumerate(S):
+        j = max(j, lindex[c])
+        if i == j:
+            ans.append(j - anchor + 1)
+            anchor = j + 1
+    print(ans)
+
+partitionLabels('ababcbacadefegdehijhklij')
+
+
+def generateParenthesis(n):
+    def backtrack(s='',left = 0,right = 0):
+        if len(s) == 2*n:
+            res.append(s)
+        if left < n:
+            backtrack(s+'(',left+1,right)
+        if right < left:
+            backtrack(s+')',left,right+1)
+    res = []
+    backtrack()
+    print(res)
+
+generateParenthesis(3)
+
+
+def generateParenthesis2(n):
+    def generate(A):
+        if len(A) == 2*n:
+            if(valid(A)):
+                res.append(''.join(A))
+        else:
+            A.append('(')
+            generate(A)
+            A.pop()
+            A.append(')')
+            generate(A)
+            A.pop()
+    def valid(A):
+        balanced = 0
+        for c in A:
+            if c=='(':
+                balanced += 1
+            else:
+                balanced -= 1
+            # if balanced < 0:
+            #     return False    # 如果右括号比左括号多，那么无论再怎么增加左括号也不会合法有效，直接return False
+        return balanced == 0
+
+    res = []
+    A = []
+    generate(A)
+    print(res)
+
+generateParenthesis2(2)
+
+
+from copy import deepcopy
+def findSubstring(s, words):
+    if not len(s):
+        return []
+
+    words_dict =dict(Counter(words))
+    step = len(words[0])
+    length = sum(map(len,words))
+    end = len(s) - length
+    index_sub = step * (len(words)-1)
+    res = []
+    tmp_list = list(s)
+
+    for index,char in enumerate(s):
+        if index > end:
+            break
+        begin = i = index
+        words_dict2 = deepcopy(words_dict)
+        for i in range(begin,begin+length,step):
+            tmp = ''.join(tmp_list[i:i+step])
+            if tmp not in words_dict2:
+                break
+            if words_dict2[tmp] <= 0:
+                break
+            if i-begin == index_sub:
+                res.append(begin)
+                break
+            words_dict2[tmp] -= 1
+    print(res)
+            
+
+findSubstring("barfoofoobarthefoobarman",["bar","foo","the"])
+
+
+
+# def DFS(sum,last,result):
+#     if sum > target:
+#         return
+#     elif sum == target:
+#         print(result)
+#         return
+#     else:
+#         for value in range(last,target):
+#             DFS(sum+value,value,result + "+" + str(value))
+
+
+
+
+# def dfs(sum, last,target,res):
+#     if sum > target:
+#         return
+#     elif sum == target:
+#         res[0] += 1
+#         return
+#     else:
+#         for value in range(last, target):
+#             dfs(sum + value, value,target,res)
+
+# target = 20
+# res = 0
+# for s in range(1, target + 1):
+#     dfs(s, s)
+# print(res)
+
+# from copy import deepcopy
+# def combinationSum(candidates, target):
+    # res = []
+    # tmp_list = []
+    # def my_combinationSum(candidates,target):
+    #     if target == 0:
+    #         res.append(deepcopy(tmp_list))
+    #         return
+    #     if target < 0:
+    #         return 
+    #     for i in candidates:
+    #         tmp_list.append(i)
+    #         my_combinationSum(candidates,target-i)
+    #         tmp_list.pop()
+    
+    # my_combinationSum(candidates,target)
+    # res2 = list(map(lambda x: sorted(x,key = lambda y: y),res))
+    # res3 = (set(tuple(v) for v in res2))
+    # print([list(v) for v in res3])
+
+#     candidates.sort()
+#     res = []
+    
+#     def backtrack(acc, start, sum):
+#         if sum == target:
+#             res.append(list(acc))
+#             return
+        
+#         for i in range(start, len(candidates)):
+#             total = candidates[i] + sum
+#             if total > target: break
+#             acc.append(candidates[i])
+#             backtrack(acc, i, total)
+#             acc.pop()
+#     backtrack([], 0, 0)
+#     print(res)
+
+# combinationSum([2,3,6,7],7)
+
+import collections
+
+def findRepeatedDnaSequences(s):
+    # res = []
+    # if len(s) <= 10 :
+    #     return res
+    # for i in range(len(s)-10):
+    #     tmp = s[i:i+10]
+    #     for j in range(i+1,len(s)-9):
+    #         if tmp == s[j:j+10] and tmp not in res:
+    #             res.append(tmp)
+    #             break
+    # return list(res)
+
+    # res, mem = set(), set()
+    # for i in range(len(s)-9):
+    #     cur = s[i:i+10]
+    #     if cur in mem:
+    #         res.add(cur)
+    #     else:
+    #         mem.add(cur)
+            
+    # return list(res)
+
+    sequences = collections.defaultdict(int) 
+    for i in range(len(s)-9):
+        sequences[s[i:i+10]] += 1
+    return [key for key, value in sequences.items() if value > 1]
+
+print(findRepeatedDnaSequences("AAAAACCCCCAAAAACCCCCCAAAAAGGGTTT"))
+
+
+
+import typing
+class Solution:
+    def permuteUnique(self, nums):
+        res = []
+        visited = [False] * len(nums)
+        nums.sort() #先排序，必须保证相邻的元素在一块
+
+        def combine(path):
+            if len(path) == len(nums):
+                res.append(path)
+                return
+            for i in range(len(nums)):
+                # 主要是如何判断重复，方法就是对与重复的元素循环时跳过递归的调用只对第一个未被使用的进行递归，
+                # 那么这一次的结果将会唯一出现在结果集中，而后重复的元素将会被略过；
+                # 如果第一个重复元素还没在当前结果中，那么我们就不需要进行递归
+                if visited[i] or (i > 0 and visited[i-1] and nums[i] == nums[i - 1]):
+                    continue
+                visited[i] = True
+                combine(path + [nums[i]])
+                visited[i] = False
+
+        combine([])
+        return res
+
+res = Solution()
+print(res.permuteUnique([1,1,2]))
+
+
+# from copy import deepcopy
+# def permute(str):
+#     result =[None] * len(str)
+#     visit = [False] * len(str)
+#     temp_list = []
+
+#     def dfs(level):
+#         if level == len(str) and result not in temp_list:
+#             temp_list.append(deepcopy(result))  # 注意深拷贝
+#             print(result)
+#             return 
+#         for i in range(len(str)):
+#             if visit[i] == False:
+#                 visit[i] = True
+#                 result[level] = str[i]
+#                 dfs(level+1)
+#                 # result[level] = None
+#                 visit[i] = False
+    
+#     dfs(0)
+        
+# permute(list([1,2,1,2]))
+
+
+# def permute2(seq):
+#     result = []
+#     if len(seq) <= 1:                        # Shuffle any sequence: generator
+#         return seq                      # Empty sequence
+#     else:
+#         for i in range(len(seq)):
+#             rest = seq[:i] + seq[i+1:] # Delete current node
+#             if i > 0 and seq[i] in seq[:i]:
+#                 continue
+#             for x in permute2(rest):    # Permute the others
+#                 result.append(seq[i] + x)  
+#     return result
+
+# for value in permute2('1122'):
+#     print(value)
+
+
+# def permute3(seq):
+#     if not seq:                        # Shuffle any sequence: generator
+#         yield seq                      # Empty sequence
+#     else:
+#         for i in range(len(seq)):
+#             rest = seq[:i] + seq[i+1:] # Delete current node
+#             for x in permute3(rest):    # Permute the others
+#                 yield seq[i:i+1] + x   # Add node at front
+
+# for value in permute3('xy'):
+#     print(value)
+
+
+
+# class Solution {
+#     public int[] corpFlightBookings(int[][] bookings, int n) {
+#         int[] res = new int[n];
+#         for(int i = 0; i< bookings.length; i++){
+#             for(int j = bookings[i][0] - 1; j < bookings[i][1]; j++){
+#                 res[j] += bookings[i][2];
+#             }
+#         }
+#         return res;
+#     }
+# }
+
+
+# import json
+
+# def _parse_json(s):
+#     ' parse str into JsonDict '
+
+#     def _obj_hook(pairs):
+#         ' convert json object to python object '
+#         o = JsonDict()
+#         for k, v in pairs.items():
+#             o[str(k)] = v
+#         return o
+#     return json.loads(s, object_hook=_obj_hook)
+
+
+# class JsonDict(dict):
+#     ' general json object that allows attributes to be bound to and also behaves like a dict '
+
+#     def __getattr__(self, attr):
+#         try:
+#             return self[attr]
+#         except KeyError:
+#             raise AttributeError(r"'JsonDict' object has no attribute '%s'" % attr)
+
+#     def __setattr__(self, attr, value):
+#         self[attr] = value
+
+# print(_parse_json('{"a":1,"b":2,"c":3,"d":4,"e":5}'))
+
+
+# def permute2(seq):
+#     result = []
+#     if len(seq) <= 1:                        # Shuffle any sequence: generator
+#         return seq                      # Empty sequence
+#     else:
+#         for i in range(len(seq)):
+#             rest = seq[:i] + seq[i+1:] # Delete current node
+#             if i > 0 and seq[i] in seq[:i]:
+#                 continue
+#             for x in permute2(rest):    # Permute the others
+#                 result.append(seq[i] + x)  
+#     return result
+
+# for index,value in enumerate(permute2('abba')):
+#     print(f'{index+1}:{value}')
+
+
+
+# class Solution:
+#     def is_valid_str(self, s: str) ->bool:
+#         if s is None:
+#             return True
+#         if len(s) % 2 == 1:
+#             return False
+
+#         stack = []
+#         symbol_map = {'(':')','[':']','{':'}'}
+#         for alphabet in s:
+#             if alphabet in symbol_map.keys():
+#                stack.append(alphabet)
+#                continue
+#             if not stack:
+#                 return False
+
+#             tmp = stack.pop()
+#             if symbol_map.get(tmp) != alphabet:
+#                 return False
+
+#         return len(stack) == 0
+
+# a = Solution()
+# print(a.is_valid_str("{[]}"))
+
+
+# def minMeetingRooms(intervals):
+#     if not intervals:
+#         return 0
+#     tmp = sorted(x for i, j in intervals for x in [[i, 1], [j, -1]])
+#     res, n = 0, 0
+#     for _, v in tmp:
+#         n += v
+#         res = max(res, n)
+#     return res
+
+
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
+
+
+class Solution:   
+    def addTwoNumbers(self,l1,l2):
+        if l1 is None:
+            return l2
+        elif l2 is None:
+            return l1
+
+        value = l1.val + l2.val
+        result = ListNode(value % 10)
+        result.next = self.addTwoNumbers(l1.next, l2.next)
+        if (value >= 10):
+            result.next = self.addTwoNumbers(ListNode(value / 10), result.next)
+        return result
+
+
+def myPrintList(l):
+    while(True):
+        print(l.val)
+        if l.next is not None:
+            l = l.next
+        else:
+            print()
+            break
+
+
+l1_1 = ListNode(8)
+l1_2 = ListNode(9)
+l1_3 = ListNode(7)
+l1_1.next = l1_2
+l1_2.next = l1_3
+
+l2_1 = ListNode(9)
+l2_2 = ListNode(8)
+l2_3 = ListNode(8)
+l2_1.next = l2_2
+l2_2.next = l2_3
+
+l3 = Solution().addTwoNumbers(l1_1, l2_1)
+myPrintList(l3)
+
+
+# str1 = '6789'
+# str2 = '5432'
+
+# def add(str1,str2):
+#     str1_list = list(str1.revese())
+#     str2_list = list(str2.revese())
+#     for s in str1_list:
+
+# add(str1,str2)
+
+def lengthOfLIS(nums):
+    """
+    :type nums: List[int]
+    :rtype: int
+    """
+    if not nums:
+        return 0
+
+    len_nums = len(nums)
+    dp = [1]*len_nums
+    result = 1
+    
+    for i in range(1, len_nums):
+        for j in range(i):
+            if nums[j] < nums[i]:
+                dp[i] = max(dp[i], 1 + dp[j])
+        result = max(result, dp[i])
+    return result
+
+
+print(lengthOfLIS([1, 7, 3, 5, 9, 4, 8]))
+
+
+def longestPalindrome(s):
+    if len(s) == 0:
+            return ''
+    max_str = s[0]
+    
+    for i in range(len(s)):
+        for j in range(i+1,len(s)):
+            tmp = s[i:j+1]
+            if tmp == tmp[::-1] and len(tmp) > len(max_str):
+                max_str = tmp
+    return max_str
+
+print(longestPalindrome("abbbac"))
+
+
+
+
+import urllib
+import json
+import os.path
+import time
+import threading
+from Queue import Queue
+from common import download_url
+import sys
+sys.path.append('..')
+from utils.perf_counter import  perf_counter
+
+class NullLock(object):
+    """docstring for NullLock"""
+    def __init__(self):
+        super(NullLock, self).__init__()
+    
+    def acquire(self):
+        pass    
+
+    def release(self):
+        pass  
+
+    def __enter__(self):
+        self.acquire()
+
+    def __exit__(self, *unused):
+        self.release()          
+        
+
+class DownPicMgr(object):
+    """docstring for DownPicMgr"""
+    def __init__(self, sync = False):
+        super(DownPicMgr, self).__init__()
+        self.serial_path = 'downloaded.txt'
+        if not os.path.exists(self.serial_path):
+            self.down_pics = set()
+        else:            
+            with open(self.serial_path) as fp:
+                self.down_pics = set(x.strip() for x in fp)
+
+        if sync:                
+            self.lock = threading.Lock()
+        else:
+            self.lock = NullLock()            
+
+
+    def has_down(self, url):
+        with self.lock:
+            return url in self.down_pics
+
+    def add(self, url):
+        with self.lock:
+            self.down_pics.add(url)    
+
+    def serialize(self):
+        with self.lock:
+            with open(self.serial_path, 'w') as fp:
+                for v in self.down_pics:
+                    fp.write("%s\n" % v)        
+              
+
+class PicGather_base(object):
+    """docstring for PicGather_base"""
+    def __init__(self, key_word, **kwargs):
+        super(PicGather_base, self).__init__()
+        self.key_word = key_word        
+        self.down_pic_mgr = DownPicMgr()
+
+        self.rn = 50
+        if 'rn' in kwargs:
+            self.rn = kwargs['rn']
+        
+        self.pic_dir = 'pics/%s' % self.key_word
+        if not os.path.exists(self.pic_dir):
+            os.makedirs(self.pic_dir)
+    
+    # @perf_counter
+    # def __call__(self):
+    #     url = 'http://image.baidu.com/i?tn=baiduimagejson&width=&height=&ie=utf8&oe=utf-8&ic=0&rn=%d&pn=0&word=%s' % (self.rn, self.key_word)
+    #     page = urllib.urlopen(url)
+    #     image_urls = self.getImageUrls(json.load(page))
+    #     self.download(image_urls)
+
+    def getImageUrls(self, image_infos):
+        ret = {}
+        if 'data' in image_infos:
+            for one_info in image_infos['data']:
+                if 'objURL' in one_info:
+                    one_url = one_info['objURL']
+                    # avoid download again
+                    if self.down_pic_mgr.has_down(one_url): 
+                        print '%s has already been downloaded' % one_url
+                    else:    
+                        ret[one_url] = one_info['type']
+        return ret
+                    
+    def download(self, image_urls):
+        succ_num = 0
+        for one_url in image_urls:                        
+            if download_url(one_url, '%s/%s' % (self.pic_dir, self.__get_filename(one_url, image_urls[one_url]))):
+                self.down_pic_mgr.add(one_url)
+                succ_num += 1
+
+        self.down_pic_mgr.serialize()    
+        print 'download total:%d pictures successfully' % succ_num 
+
+    def __get_filename(self, one_url, type):
+        head, tail = os.path.split(one_url)
+        pos = tail.rfind('.%s' % type)
+        if pos == -1:
+            return '%s.%s' % (urllib.quote(tail), type)
+        else:            
+            return '%s_%d.%s' % (tail[0:pos], time.time(), type)
+
+class ImageUrlProducer(object):
+    """docstring for ImageUrlProducer"""
+    def __init__(self, key_word, rn, max_num, customer_num):
+        super(ImageUrlProducer, self).__init__()
+        
+        self.pic_processed = set()
+
+        self.key_word = key_word
+        self.rn = rn
+        self.max_num = max_num
+        self.customer_num = customer_num
+        
+    def __call__(self, q):
+        pn = 0
+        while True:
+            url = 'http://image.baidu.com/i?tn=baiduimagejson&width=&height=&ie=utf8&oe=utf-8&ic=0&rn=%d&pn=%d&word=%s' % (self.rn, pn, self.key_word)
+            # print url
+            page = urllib.urlopen(url)
+            if not self.produceImageUrls(json.load(page), q):
+                break  
+
+            pn += self.rn
+            if self.max_num > 0:  ## 0表示全部下载               
+                if pn >= self.max_num:
+                    break
+
+        # notify customer to exit
+        for i in range(self.customer_num):
+            q.put('complete')            
+
+    def produceImageUrls(self, image_infos, q):   
+        # with open('images.json', 'w') as fp:
+        #     json.dump(image_infos, fp, indent=4)     
+
+        if 'data' in image_infos:
+
+            if len(image_infos['data']) == 1: #data的最后一个info始终是空{}
+                return False
+
+            for one_info in image_infos['data']:
+                if 'objURL' in one_info:
+                    one_url = one_info['objURL']
+                    # avoid download again
+                    if one_url not in self.pic_processed: 
+                        q.put((one_url, one_info['type'], ))
+                        self.pic_processed.add(one_url)
+                    else:
+                        print 'url:%s already processed, skip' % one_url    
+            return True
+                        
+        else:
+            return False                
+        
+class ImageUrlCustomer(object):
+    """docstring for ImageUrlCustomer"""
+    def __init__(self, pic_dir):
+       super(ImageUrlCustomer, self).__init__()
+       self.pic_dir = pic_dir       
+    
+    def __call__(self, q):
+        while True:            
+            item = q.get()
+            if isinstance(item, tuple):
+                one_url = item[0]
+                file_type = item[1]
+                download_url(one_url,  self.calc_local_path(one_url, file_type))
+            else:
+                break 
+
+    def calc_local_path(self, one_url, type):
+        head, tail = os.path.split(one_url)
+        pos = tail.rfind('.%s' % type)
+        if pos == -1:
+            return '%s/%s_%d.%s' % (self.pic_dir, urllib.quote(tail), time.time(), type)
+        else:            
+            return '%s/%s_%d.%s' % (self.pic_dir, tail[0:pos], time.time(), type)                   
+                              
+
+class PicGather_mt(PicGather_base):
+    """docstring for PicGather_mt"""
+    def __init__(self, key_word, **kwargs):
+        super(PicGather_mt, self).__init__(key_word, **kwargs)
+
+        self.max_num = 0
+        if 'max_num' in kwargs:
+            self.max_num = kwargs['max_num']
+
+
+    @perf_counter
+    def __call__(self):        
+        # 1个image-url producer
+        # 2个 image-url customer
+        thrs = []
+        q = Queue(self.rn)
+        customer_num = 10
+
+        producer = threading.Thread(target=ImageUrlProducer(self.key_word, self.rn, self.max_num, customer_num), args=(q,))
+        thrs.append(producer)        
+        
+        for i in range(customer_num):
+            customer = threading.Thread(target=ImageUrlCustomer(self.pic_dir), args=(q,))
+            thrs.append(customer)
+
+        for one_thr in thrs:
+            one_thr.start()
+
+        for one_thr in thrs:
+            one_thr.join() 
+  
+
+pg = PicGather_mt('tiger')
+pg()
+
+
+
+
+
+
+
+
