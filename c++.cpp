@@ -1,630 +1,790 @@
-day1
-
-1.双冒号::作用域运算符 
-int a =200;
-int main()
-{
-    int a =100
-    cout<<a<<::a<<endl; //100 200  全局作用域
-}
-
-2.namespace 
-    1.命名空间解决命名冲突，可以放 函数 类 变量
-    2.命名空间必须定义在全局作用域下，不能放在函数内
-    3.命名空间可以嵌套命名空间
-    4.命名空间是开放的，可以随时在原空间上添加内容
-    5.无名、匿名命名空间 相当于写了 static int m_C ; static int m_D;只能在当前文件内使用
-    6.命名空间可以起别名 namespace A = B;  A::a,B::a 
-
-3.using声明 using A::a  编译器又有就近原则(注意二义性)
-  using 编译指令  using namespace A 
-
-4.C++对C语言增强
-a.全局变量检测增强
-b.函数检测增强:  参数类型检测 返回值检测 传参个数检测	
-c.类型转换检测增强  malloc返回void* ，C中可以不用强转，C++必须强转
-d.struct增强  C中不许有函数 C++可以   使用C必须加关键字 struct ，C++可以不加
-e.bool数据类型增强  C没有 C++有  true 真  false假  sizeof  1
-f.三目运算符增强  C中返回的是值  C++中返回的是变量
-g.const增强  C语言中const是伪常量，可以通过指针修改  C++中const会放入到符号表中  C语言中const默认是外部链接，C++中const默认是内部链接  
-const分配内存情况  //会分配内存即可通过指针间接修改
-  对变量取地址，会分配临时内存  // const int m_A = 10;int * p = (int*)&m_A; //会分配临时内存 注意：m_A为const int *类型
-  extern关键字下的const会分配内存
-  用普通变量初始化const变量   int a = 10; const int b = a; //会分配内存
-  自定义数据类型会分配内存
-
-尽量用const代替define define宏没有作用域概念  define宏常量没有类型
-
-5.引用基本语法(必须引用合法内存空间，不能直接引用数值)
-  Type &别名 = 原名
-  引用必须初始化   //int &a; 必须初始化
-  一旦初始化后 不能修改 int &b = a; 引用初始化后不可以修改了   int c = 20;b = c; //这是赋值，不是修改！！！
-  对数组建立引用  int arr[10];int(&pArr)[10] = arr;     typedef int(ARRAYREF)[10]; ARRAYREF & pArr2 = arr;
-  注意事项，不要返回局部变量的引用  static生命周期为整个程序运行周期，可见性为当前函数
-  如果函数返回值是引用，那么函数的调用可以作为左值  函数 int& doWork2()；doWork2() = 1000
-  引用的本质 就是一个指针常量
-
-6.指针的引用:用一级指针引用 可以代替二级指针
-
-void allocatMemory(Person ** p) // **p 具体的Person对象  *p 对象的指针   p 指针的指针
-{
-	*p = (Person *)malloc(sizeof(Person));
-
-	(*p)->m_Age = 100;
-}
-
-void test01()
-{
-	Person * p = NULL;
-	allocatMemory(&p);
-	cout <<  "p的年龄： " <<p->m_Age << endl;
-}
-
-//利用指针引用开辟空间
-void allocatMemoryByRef(Person* &p)
-{
-	p = (Person*)malloc(sizeof(Person));
-	p->m_Age = 1000;
-}
-
-void test02()
-{
-	Person * p = NULL;
-	allocatMemoryByRef(p);
-	cout << "p的年龄：" << p->m_Age << endl;
-
-7.常量引用   使用场景 修饰形参为只读   const int &a = 10;会分配内存，可间接修改  //相当于 int temp =10; const int &a =temp;
-
-8.内联函数 ： 声明和实现时都需要加inline关键字   类内部的成员函数默认加inline
-  注意：不能存在任何形式的循环语句   	不能对函数进行取址操作
-
-9.函数默认参数(c语言中没有) ：如果一个位置有了默认参数，从该位置起，右边的参数都必须有默认参数
-  函数声明和实现只能有一个有默认值    占位参数(只有类型，无变量)也可以有默认参数
-
-10.函数重载： 必须在同一个作用域 函数参数 个数 或顺序 或类型 不同;返回值不作为重载条件
-  注意：函数重载和函数默认参数二义性问题 
-  void fun(int a,int b=10) ;void fun(int a) ;  fun(10)//无法区分
-
-void func3(int &a) //引用必须要引合法的内存空间
-{
-	cout << " int &a" << endl;
-}
-
-void func3(const int &a)  //const也是可以作为重载的条件  int tmp = 10; const int &a = tmp;
-{
-	cout << "const int &a" << endl;
-}
-
-void test03()
-{
-	//int a = 10;
-	func3(10);
-}
-
-11.c语言写的接口能被c++调用 如下写：
-
-#ifdef __cplusplus
-extern "c"{
-#endif
-
-  函数
-
-#ifdef __cplusplus
-}
-#endif
-
-c++导入相应头文件
-
-
-day2 类 继承
-
-1.构造函数
-  无参构造写法 ：Person p1;  注意不能写成 Person p1();//编译器认为这是函数声明
-  有参构造写法： Person p2(10); 或者 Person p2 =Person（10）  //Person（10）是匿名对象 执行当前后会析构
-  隐式类型转换： Person p1 =100; 相当于调用 Person p1 =Person(100);
-
-2.拷贝构造函数
-  Person (const Person & p);
-  写法: Person p1(p2);或者Person p1 =Person(p2);
-  注意：不能用拷贝构造函数初始化匿名对象
-    如果写成左值 Person(p1) 等价于 Person p1;
-    写成右值 Person p1 =Person(p2) 可以
-
-3.调用时机： 
-  用已经创建好的对象初始化新的对象  
-  以值传递方式给函数参数传值  
-  以值的方式返回局部对象
-
-4.构造函数的调用规则
-  如果提供了有参的构造，那么系统就不会提供默认的构造了，但是会提供拷贝构造
-  如果提供了拷贝构造函数，那么系统就不会提供其他的构造函数了
-
-5.explicit关键字作用：防止构造函数中的隐式类型转换
-
-6.new运算符 
-  通过new开辟数组 一定会调用默认构造函数,所以一定要提供默认构造
-	Person * pArray = new Person[10];
-	Person pArray2[2] = { Person(1), Person(2) }; //在栈上开辟数组，可以指定有参构造
-
-  void *p = new Person(10); 
-	//当用void* 接受new出来的指针 ，会出现释放的问题
-	delete p;
-	//无法释放p ，所以避免这种写法
-
-  //malloc会调用构造吗？ 不会  new会调用构造
-
-7.静态成员变量和静态成员函数
-  1.静态成员变量
-    编译阶段分配内存(早于运行)
-    所有该类的对象共享数据
-    通过对象访问 也可以直接通过类名访问
-    类内声明 类外初始化
-  2.静态成员函数
-    可以访问静态成员变量，不可以访问普通成员变量
-    普通成员函数都可以访问
-    静态成员函数也有权限
-    通过对象访问 也可以直接通过类名访问
-8.单例模式
-  目的：让类只有一个实例，实例一般不需要自己释放
-  写法：将默认构造和拷贝构造 私有化(private)
-       内部维护一个对象指针
-       私有化唯一指针
-       对外提供getInstance方法来访问这个指针
-
-class Printer{
-public:
-	static Printer* getInstance(){ return pPrinter;}
-	void PrintText(string text)
-  {
-		cout << "打印内容:" << text << endl;
-		cout << "已打印次数:" << mTimes << endl;
-		cout << "--------------" << endl;
-		mTimes++;
-	}
-private:
-	Printer(){ mTimes = 0; }
-	Printer(const Printer&){}
-private:
-	static Printer* pPrinter;
-	int mTimes;
-};
-
-Printer* Printer::pPrinter = new Printer;
-
-void test()
-{
-	Printer* printer = Printer::getInstance();
-	printer->PrintText("离职报告!");
-	printer->PrintText("入职合同!");
-	printer->PrintText("提交代码!");
-}
-
-9.类的成员变量和成员函数分开存储 空类的大小为1  	只有非静态成员属性才属于对象身上，成员函数代码是类的对象共用的(通过this指针区分)
-
-10.this指针 指针永远指向当前对象 非静态成员函数才有this指针  Type * const this //指针指向不能变
-
-11.空指针访问成员函数
-  如果成员函数没用到this,空指针可以直接访问
-  如果成员函数用到this指针，注意if判断 this 是否为空
-
-12.常函数常对象
-  1.常函数
-    void fun() const {}
-    常函数修饰this指针 const Type * const this  不能改变this指针执行的值
-  2.常对象
-    const Person P1
-    常对象不可以调用普通的成员函数 可以调用常函数
-    用 mutable 修饰的成员变量在常函数中能修改
-
-13.友元 friend
-  1.全局函数做友元函数: 全局函数写到 类中做声明，并在前面加friend
-  2.整个类做友元类 ：类中写 friend class 类名     友元是单向的，不可传递
-  3.单个成员函数做友元函数： friend void Person::fun();
-
-14.运算符的重载
-  1. 返回类型 operator重载的运算符(参数){};
-  2.在class内重载 和 全局函数重载 参数个数
-  3.<<重载 2.4	写到全局函数中 
-  ostream& operator<< ( ostream & cout, Person & p1  ) {}
-  如果重载时候想访问 p1的私有成员，那么全局函数要做Person的友元函数
-  4.重载++运算符 Type & operator++() 前置 (注意返回引用)  Type operator++(int) 后置(返回值)
-  	前置理念 先++ 后返回自身   后置理念 先保存住原有值  内部++ 返回临时数据
-  5.智能指针实现
-class Person
-{
-public:
-	Person(int age){	this->m_Age = age;}
-  void showAge(){cout << "年龄为：" << this->m_Age << endl;}
-	~Person(){cout << "Person的析构调用" << endl;}
-  int m_Agenew
-};
-
-//智能指针
-//用来托管自定义类型的对象，让对象进行自动的释放
-class smartPointer
-{
-public:
-	smartPointer(Person * person){	this->person = person;}
-	//重载->让智能指针对象 想Person *p一样去使用
-	Person * operator->(){	return this->person;}
-	//重载 * 
-	Person& operator*(){return *this->person;}
-	~smartPointer(){
-		cout << "智能指针析构了" << endl;
-		if (this->person !=NULL)
-		{
-			delete this->person;
-			this->person = NULL;
-		}
-	}
-private:
-	Person * person;
-};
-
-void test01()
-{
-	//Person p1(10); //自动析构
-	//Person * p1 = new Person(10);
-	//p1->showAge();
-//	delete p1;
-	smartPointer sp(new Person(10)); //sp开辟到了栈上，自动释放
-	sp->showAge(); // sp->->showAge(); 编译器优化了 写法
-	(*sp).showAge();
-}
-
-  6.如果类中有指向堆区的指针，就可能出现深浅拷贝的问题所以要重载 = 运算符 如果想链式编程 return*this 
-  7.[]运算符重载 返回数组索引的引用  int & operator[](int index)  return this->pAddress[index]
-  8.总结：
-    	=, [], () 和 -> 操作符只能通过成员函数进行重载 
-      << 和 >>只能通过全局函数配合友元函数进行重载 
-      不要重载 && 和 || 操作符，因为无法实现短路规则
-15.函数调用运算符重载  	
-    仿函数 重载()运算符  对象() 看似像函数调用  MyAdd()   匿名对象
-class MyPrint
-{
-public:
-	void operator()( string text)
-	{cout << text << endl;}
-};
-void test01()
-{
-	MyPrint myPrint;
-	myPrint("hello world1111"); // 仿函数
-}
-
-class MyAdd
-{
-public:
-	int operator()(int v1,int v2)
-	{	return v1 + v2;}
-};
-void test02()
-{
-	//MyAdd myAdd;
-	//cout << myAdd(1, 1) << endl;
-
-	cout << MyAdd()(1, 1) << endl; //匿名对象
-}
-
-16.继承中的对象模型 
-  1.子类会继承父类中所有的内容 ，包括了私有属性,只是我们访问不到，编译器给隐藏了
-  2.cl /d1 reportSingleClassLayout类名 文件名
-  3.继承中的构造和析构顺序 子类创建对象时，先调用父类的构造，然后调用自身构造  析构顺序与构造顺序相反
-  4.子类是不会继承父类的构造函数和析构函数 补充内容，如果父类中没有合适默认构造，那么子类可以利用初始化列表的方式
-
-17.继承中的同名处理
-  1.成员属性 先直接调用子类，如果调用父类，需要作用域
-  2.成员函数 直接调用子类函数 父类函数所有版本会被隐藏 除非显式作用域运算符调用
-
-18.继承中静态成员的处理
-  1.类似非静态成员函数处理
-  2.如果想访问父类中的成员，加作用域即可
-
-19.多继承的概念以及问题 class A : public B1, public B2,….
-  1.引发二义性问题
-  2.想解决二义性问题，就需要通过作用域来进行区分
-  3.菱形继承问题以及解决
-  4.解决问题利用虚基类
-  5.sheepTuo 内部结构 vbptr 虚基类指针 指向一张 虚基类表 通过表找到偏移量 找到共有的数据 内部工作原理 （可以不掌握）
-
-day03 多态 模板
-
-1.静态联编和动态联编
-  a.多态分类：静态多态（函数重载） 动态多态（虚函数 继承关系）
-  b.静态联编： 地址早绑定 编译阶段
-  c.动态联编： 地址晚绑定 运行阶段
-  d.多态：父类的指针或引用指向子类对象
-
-2.多态原理解析
-  1.父类有了虚函数后，内部结构发生变化 内部多了 vfprt 虚函数表指针指向vftable虚函数表
-  2.子类进行继承会继承vfptr vftable 构造函数中会将虚函数指针 指向自己的虚函数表
-  3.如果发生重写，会替换虚函数表中原有的父类的函数 改为子类当前的函数
-  4. ((void(*)())  (*(int*)*(int*)animal))();
-  5.开发有原则  开闭原则  --  对扩展开放  对修改关闭
-  6.利用多态实现 – 利于后期扩展，结构性非常好，可读性高， 效率稍微低，发生多态内部结构复杂
-
-3.抽象类和纯虚函数
-  1.纯虚函数写法： virtual void fun() =0;
-  2.抽象类 ：不可实例化对象
-  3.如果继承了抽象类，必须重写抽象类中的纯虚函数、
-
-4.虚析构和纯虚析构
-  1.虚析构 virtual ~Person(){}
-  2.用途：通过父类指针指向子类对象释放时 不干净导致的问题
-  3.纯虚析构函数： virtual ~Person() =0
-  4.纯虚析构函数 类内声明 类外实现 如果出现纯虚析构函数，该类为抽象类 不可实例化
-
-5.向上类型转换(子类转基类，安全)和向下类型转换(基类转子类，不安全)  如果发生多态 转换总是安全的
-
-6.函数模板 
-  1.template <class/typename T> 
-    void myswap(T &a ,T &b)
-    myswap（a,b） 自动类型推导  按照a b的类型 来替换T
-    myswap<int>(a,b) 显示指定类型
-  2.函数模板与普通函数的区别以及调用规则
-    1.区别 普通函数可以进行隐式类型转换  模板不可以
-    2.调用规则
-	    c++编译器优先考虑普通函数
-	    可以通过空模板实参列表的语法限定编译器只能通过模板匹配
-	    函数模板可以像普通函数那样可以被重载
-      如果函数模板可以产生一个更好的匹配，那么选择模板
-  3.模板机制
-      模板并不是万能的，不能通用所有的数据类型
-      模板不能直接调用，生成后的模板函数才可以调用
-      二次编译，第一次对模板进行编译，第二次对替换T类型后的代码进行二次编译
-  4.模板局限性
-      模板不能解决所有的类型
-      如果出现不能解决的类型，可以通过具体化来解决问题
-      template<> 返回值 函数名<具体类型>（参数）
-
-7.类模板
-  1.template<class T1, calss T2>
-    class Person
-    {
-      T1 a;
-      T2 b;
-    };
-  2.与函数模板区别
-      可以有默认类型参数  函数模板不能有默认类型参数
-      不会进行自动类型推导 函数模板会自动类型推导
-  3.类模板中的成员函数 一开始不会创建出来，而是在运行时才去创建
-
-8.类模板做函数的参数方式
-  1.显示指定类型  void doWork( Person<string ,int> & p ) 
-  2.参数模板化    template<class T1 ,class T2>
-                void doWork2(Person<T1, T2> & p)
-  3.整体模板化    template<class T>
-                void doWork3(T&p)
-
-9.类模板遇到继承
-  1.基类如果是模板类，必须让子类告诉编译器 基类中的T到底是什么类型
-    如果不告诉，那么无法分配内存，编译不过
-    利用参数列表class Child :public Base<int>
-
-10.类模板的分文件编写问题以及解决
-  1.类模板碰到友元函数.h .cpp分别写声明和实现
-  2.但是由于 类模板的成员函数运行阶段才去创建，导致包含.h头文件，不会创建函数的实现，无法解析外部命令
-  3.解决方案  保护 .cpp文件 （不推荐）
-  4.不要进行分文件编写，写到同一个文件中，进行声明和实现，后缀名改为.h
-
-11.类模板碰到友元函数
-  1.友元函数类内实现
-    friend void printPerson( Person<T1 ,T2> & p ) 
-  2.友元函数类外实现
-   类内声明 friend void printPerson<>(Person<T1, T2> & p); //没有<>普通函数 声明  加上 <>模板函数声明
-   让编译器提前看到printPerson声明  template<class T1, class T2>void printPerson(Person<T1, T2> & p);
-   让编译器看到Person类声明 template<class T1, class T2> class Person;
-
-
-day04 类型转换 异常 文件
-
-1.类型转换
-  1.静态转换 static_cast  static_cast< 目标类型>（原始数据）
-      可以进行基础数据类型转换  父与子类型转换  没有父子关系的自定义类型不可以转换
-  2.动态转换 dynamic_cast 不可以转换基础数据类型  父子之间可以转换 父转子,不可以 子转父,可以  发生多态,都可以
-  3.常量转换 const_cast  不能对非指针或者非引用进行转换
-  4.重新解释转换 reinterpret_cast  最不安全，最鸡肋 不推荐
-
-2.异常
-  1. try{可能出现异常的语句} catch(捕获类型) ...代表 所有其他类型  
-      如果不想处理异常，继续向上抛出 throw 
-      如果没有任何处理异常的地方，那么成员调用terminate函数，中断程序
-  2.自定义异常类 ，可以抛出自定义的对象  ，捕获自定义的异常
-  3.栈解旋 从try开始到 throw 抛出异常之前  所有栈上的对象 都会被释放 这个过程称为栈解旋 栈上对象构造顺序与析构顺序相反
-
-3.异常的接口声明 如果想抛出特定的类型异常 ，可以利用异常的接口声明
-    void func() throw ( int) 只能抛出 int类型
-    throw() 不抛出任何类型异常
-
-4.异常变量生命周期
-  如果  MyException e，会多开销一份数据 ,调用拷贝构造
-  如果  MyExcepiton *e   ， 不new提前释放对象 new 自己管理delete
-  推荐  MyException &e  容易些 而且 就一份数据
-
-5.异常的多态使用 利用多态来实现 printError同一个接口调用 抛出不同的错误对象，提示不同错误
-
-6. 使用系统标准异常
-    #incldue <stdexcept>
-    throw out_of_range（”aaa”） 。。。
-    catch(out_of_range & e)  cout  <<  e.what();
-7.编写自己的异常类
-    自己的异常类 需要继承于  exception
-    重写  虚析构   what（）
-    内部维护以错误信息 字符串
-    构造时候传入 错误信息字符串，what返回这个字符串
-    string 转 char *   .c_str();
-
-8.标准的输入流
-  1.cin.get 缓冲区中读取一个字符
-    cin.get(两个参数) 不读换行符
-    cin.getline () 读取换行 并且扔掉
-    cin.ignore 忽略 （N） N代表忽略字符数 
-    cin.peek 偷窥   偷看1个字符然后放回去
-    cin.putback  放回 把字符放回缓冲区
-  2.输入流案例
-    判断用户输入的是字符串还是数字 利用偷窥 或者 放回
-    让用户输入指定范围内的数字，如果不正确 重新输入
-  3.cin.fail() 看标志位  0正常 1不正常
-    cin.clear()重置标志位
-    cin.syne() 清空缓冲区
-  4.标准输出流
-    流对象的成员函数  
-    cout.width(20);
-    cout.fill('*');
-    cout.setf(ios::left); //设置格式  输入内容做对齐
-    cout.unsetf(ios::dec); //卸载十进制
-    cout.setf(ios::hex); //安装16进制
-    cout.setf(ios::showbase); // 强制输出整数基数  0  0x
-    cout.unsetf(ios::hex);
-    cout.setf(ios::oct);
-    控制符  头文件 iomanip
-	  cout << setw(20)
-		<< setfill('~')
-		<< setiosflags(ios::showbase) //基数
-		<< setiosflags(ios::left) //左对齐
-		<< hex // 十六进制
-		<< number
-  5.文件操作
-  写文件 ofstream  ofs  open 指定打开方  isopen 判断是否打开成功  ofs << “数据” ofs.close
-  读操作 ifstream  ifs  指定打开方式 ios：：in isopen判断是否打开成功 三种方式读取数据
-
-day5 STL
-
-1.string容器
-    1.构造 、 赋值 assign 
-    2.对字符存取 [] at区别  []访问越界直接挂  at 抛出异常 out_of_range
-    3.substr  配合 find查找 邮件用户名
-    4.char *  string 互转 char * 隐式转换成string 反之不可以  c_str 转大写 toupper  
-    5.find  如果找不到  返回 -1 找到返回第一次出现的位置
-2.vector容器  单端数组、动态数组
-    1.构造、赋值、 大小 size 重置大小 resize 容量 capacity  是否为空 empty 交换 swap
-    2.巧用swap收缩空间 
-      vector<int>(v).swap(v);   vector<int>(v)匿名对象，用完被释放 v本身是一个vector
-    3.reserve(int len) 预留空间 容器预留len个元素长度，预留位置不初始化，元素不可访问，开辟大容量数组时使用此方法可减少 调整开辟的空间的次数
-      void test04()
-      {
-        vector<int>v;
-        v.reserve(100000); //预留出空间
-        int * p = NULL;
-        int num = 0;
-        for (int i = 0; i < 100000;i++)
-        {
-          v.push_back(i);
-          if (p!=&v[0])
-          {
-            p = &v[0];
-            num++;
-          }
-        }
-        cout << num << endl;
-        // 开辟100000数据用了多少次
-      }
-    4.insert 插入（迭代器） erase删除 （迭代器） clear（）清空容器
-    5.pop_back 尾删 front 第一个数据  back最后一个数据
-    6.逆序遍历 reverse_iterator    rbegin rend
-    7.如和区分迭代器是否支持随机访问 
-        vector<int>::iterator itBegin = v.begin();
-        itBegin = itBegin + 3;
-        //如果上述写法不报错，这个迭代器是随机访问迭代器  
-    8.vector的插入操作可能造成重新分配内存空间，导致原有的迭代器全部失效
-3.deque容器 双端数组  没有容量 
-    1.API  赋值、构造、大小、交换、插入 、删除
-    2.头部删除 头部插入 pop_front push_front
-    3.中迭代器  iterator 普通  reverse_iterator 逆序迭代器  const_iterator只读迭代器
-    4.排序 sort 引用头文件 algorithm  
-    5.sort(d.begin(),d.end()) 从小到大 sort(d.begin(),d.end(),函数指针/防函数/lambda表达式)
-    eg.  bool myCompare(int v1, int v2){return v1 > v2; }   sort(d.begin(),d.end(),myCompare);
-
-4.stack栈容器 top push pop size empty
-
-5.queue队列容器 front back push pop size empty
-
-6.list容器：双向循环链表 迭代器是不支持随机访问的
-  1.赋值、构造、大小、为空、删除 、添加
-  2.移除 remove( 10 )  删除容器中所有与10 匹配的元素
-  3.反转排序 reverse 反转  排序 成员函数 sort   默认排序 从小到大  自定义数据类型，必须指定排序规则 高级  remove删除list容器中自定义数据类型
-
-7.set关联式容器：红黑树
-  1.只有key值，按照key，插入数据自动排序 
-  2.insert 插入值，erase  参数可以传值 或者 迭代器
-  3.find（） 返回值 迭代器  找不到返回的  end()
-  4.count 计数  对于set而言  结果 就是 0 或者1 
-  5.lower_bound(keyElem);//返回第一个key>=keyElem元素的迭代器。
-    upper_bound(keyElem);//返回第一个key>keyElem元素的迭代器。
-    equal_range(keyElem);//返回容器中key与keyElem相等的上下限的两个迭代器。
-  6.对组 pair 第一个值 first  第二个值 second 默认括号 make_pair()
-  7.set插入返回值是 对组  < 迭代器， 是否成功标示>
-  8.指定set排序规则，利用仿函数  set插入自定义数据类型 
-
-8.map容器：每个元素 都是一个pair
-  1.对于map而言 key是不可以重复 multimap可以
-  2.4中插入方式  
-      map<int, string> mapStu;
-    // 第一种 通过pair的方式插入对象
-    mapStu.insert(pair<int, string>(3, "小张"));
-    // 第二种 通过pair的方式插入对象
-    mapStu.inset(make_pair(-1, "校长"));
-    // 第三种 通过value_type的方式插入对象
-    mapStu.insert(map<int, string>::value_type(1, "小李"));
-    // 第四种 通过数组的方式插入值
-    mapStu[3] = "小刘";
-    mapStu[5] = "小王";
-  3.count 统计 map 0 或1  multimap可能大于1
-  4.排序规则自己指定
-
-day06 算法 适配器
-
-1.函数对象（仿函数）
-  1.重载 () 所以函数的对象 使用（）像函数调用 是类 而不是普通的函数
-  2.内部记录状态
-  3.作为类型 与模板进行配合使用
-
-2.谓词 普通函数或者仿函数返回值 bool类型
-  1.一元 一个参数 二元 两个参数
-  2.一元 查找 大于20的数字   find_if 返回迭代器
-  3.二元 排序
-
-3.内建函数对象 取反 加法 大于 greater<int>()
-
-4.适配器
-  a.
-    1.函数适配器 eg.0~9 加起始值 进行输出 用户提供起始值
-    1.bind2nd  绑定
-    2.继承  binary_function<参数类型1，参数类型2，返回值类型>
-    3.const修饰 operator()  
-    4.取反适配器  not1  一元 找出小于5   not2 二元  排序  not2(  less<int>() ) 从大到小 相当于  greater<int>()
-  b.
-    1.普通函数指针适配   ptr_fun 
-  c.
-    1.成员函数适配
-    //如果容器存放的是对象指针，  那么用mem_fun
-    //如果容器中存放的是对象实体，那么用mem_fun_ref	
-5.常用遍历算法
-  1.for_each  可有有返回值  可以绑定参数进行输出
-  2.transform  将容器中的数据进行搬运到另一个容器中  注意：目标容器需要开辟空间
-  3.常用查找算法
-      find  按值查找 Person
-      find_if 按条件查找 Person*
-      adjacent_find算法 查找相邻重复元素 返回第一个重复元素的迭代器位置
-      binary_search算法 二分查找法 必须容器是有序序列
-      count 和count_if
-  4.常用排序算法
-      merge算法 容器元素合并，并存储到另一容器中，两容器要有序，并且顺序一致
-      sort 排序
-      random_shuffle 洗牌  自己提供随机种子
-      reverse反转
-5.常用的拷贝和替换算法
-    copy复制
-    replace  replace_if 替换
-    swap 交换
-6.常用算数生成算法
-    头文件 numeric 
-    accumulate 累加
-    fill 填充
-7.常用集合算法
-    交集 set_intersection
-    并集 set_union
-    差集 set_difference
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# TODO 1.可变对象和不可变对象
+'''
+Python的每个对象都分为可变和不可变，主要的核心类型中，数字、字符串、元组是不可变的，列表、字典是可变的。
+对不可变类型的变量重新赋值，实际上是重新创建一个不可变类型的对象，并将原来的变量重新指向新创建的对象
+（如果没有其他变量引用原有对象的话（即引用计数为0），原有对象就会被回收）
+注意：Python内存管理机制，Python对（int类型）和（较短的字符串）进行了缓存，无论声明多少个值相同的变量，实际上都指向同个内存地址
+可变类型的话，以list为例。list在append之后，还是指向同个内存地址，因为list是可变类型，可以在原处修改，但两个值相同的list地址不一定相同
+https://www.cnblogs.com/blackmatrix/p/5614086.html
+
+https://www.jianshu.com/p/c5582e23b26c
+python规定参数传递都是传递引用，也就是传递给函数的是原变量实际所指向的内存空间，修改的时候就会根据该引用的指向去修改该内存中的内容，
+所以按道理说我们在函数内改变了传递过来的参数的值的话，原来外部的变量也应该受到影响。但是上面我们说到了python中有可变类型和不可变类型，
+这样的话，当传过来的是可变类型(list,dict)时，我们在函数内部修改就会影响函数外部的变量。
+而传入的是不可变类型时在函数内部修改改变量并不会影响函数外部的变量，因为修改的时候会先复制一份再修改
+
+is（比较id）和==(比较值)
+#与None作比较要使用“is”或“is not”，不要使用等号,对于类，可以用__eq__重载== 
+class Bad(object):
+    def __eq__(self, other):        
+        return True 
+
+print(Bad() == None)   # ==操作会调用左操作数的__eq__函数，而这个函数可以被其任意定义
+print(Bad() is None) 
+
+def add_end(L=[]):    
+    L.append('END')    
+    return L
+
+add_end() # ['END']
+add_end() # ['END','END']
+
+# None是不变对象
+def add_end2(L=None):    
+    if L is None:        
+        L = []    
+    L.append('END')    
+    return L
+
+add_end2() # ['END']
+add_end2() # ['END']
+'''
+# TODO 局部变量和全局变量
+'''
+# https://blog.csdn.net/HappyRocking/article/details/80115241
+company = 'ali'  # 全局变量      
+def change_name(name):
+    global company         # company 提升为全局变量 
+    company = 'tengxun'    # 为全局变量赋值
+    print("befor change", name, company)
+    name = 'zhangsan'  # name是局部变量，变量的作用域为仅为该函数
+    print("after change", name)      
+print('company: ', company)   # 执行查看函数调用前打印的情况
+name = 'lisi'
+change_name(name)
+print(name)
+print('company: ', company)   # 执行查看函数调用后打印的情况 company值已改变为tengxun
+'''
+
+
+# TODO tuple
+# 只有1个元素的tuple定义时必须加一个逗号,，来消除歧义
+# t = (1,)# (定义元组) 
+# t=(1) #(定义一个整数值为1)
+
+
+# TODO set map
+# 一个对象能不能作为字典的key，决于其有没有__hash__方法，
+# 所以所有python自带类型中，除了list、dict、set和内部至少带有上述三种类型之一的tuple之外，其余的对象都能当key
+#  https://blog.csdn.net/lnotime/article/details/81192207  待学习
+# 可以使用大括号 { } 或者 set() 函数创建集合，注意：创建一个空集合必须用 set() 而不是 { }，因为 { } 是用来创建一个空字典
+#  s = set([1, 2, 3]) 
+
+
+# TODO 函数
+# 函数身为一个对象，拥有对象模型的三个通用属性：id、类型、和值
+# 函数执行完毕也没有return语句时，自动return None。 
+# 函数可以同时返回多个值，但其实就是一个tuple，而多个变量可以同时接收一个tuple，按位置赋 给对应的值
+'''
+函数的参数
+1.位置参数
+2.默认参数(必选参数在前，默认参数在后)定义默认参数要牢记一点：默认参数必须指向不变对象！
+Python函数在定义的时候，默认参数L的值就被计算出来了，即[]，因为默认参数L也是一个变量，它指向对象[]，
+每次调用该函数，如果改变了L的内容，则下次调用时，默认参数的内容就变了，不再是函数定义时的[]了。
+参考 add_end()函数
+3.可变参数：*agrs,允许你传入0个或任意个参数，这些可变参数在函数调用时自动组装为一个tuple 
+*nums表示把nums这个list的所有元素作为可变参数传进去
+4.关键字参数：**kargw,关键字参数允许你传入0 个或任意个含参数名的参数，这些关键字参数在函数内部自动组装为一个dict
+**extra表示把extra这个dict的所有key-value用关键字参数传入到函数的**kw参数，kw将获得一个dict，
+注意kw获得的 dict是extra的一份拷贝，对kw的改动不会影响到函数外的extra
+person('Jack', 24, city=extra['city'], job=extra['job']) 
+extra = {'city': 'Beijing', 'job': 'Engineer'} 
+person('Jack', 24, **extra)
+5.命名关键字参数:如果要限制关键字参数的名字，就可以用命名关键字参数,
+和关键字参数**kw不同，命名关键字参数需要一个特殊分隔符*，*后面的参数被视为命名关键字参数
+如果函数定义中已经有了一个可变参数，后面跟着的命名关键字参数就不再需要一个特殊分隔符*了
+命名关键字参数必须传入参数名，这和位置参数不同
+def person(name, age, *, city='Beijing', job):    
+    print(name, age, city, job) 
+6.对于任意函数，都可以通过类似func(*args, **kw)的形式调用它
+7.尾递归优化
+8. 匿名函数 lambda
+匿名函数有个限制，就是只能有一个表达式，不用写return，返回值就是该表达式的结果。
+关键字lambda表示匿名函数，冒号前面的x表示函数参数
+list(map(lambda x: x * x, [1, 2, 3, 4, 5, 6, 7, 8, 9])) 
+用匿名函数有个好处，因为函数没有名字，不必担心函数名冲突。
+此外，匿名函数也是一个函数对象，也可以把匿名 函数赋值给一个变量，再利用变量来调用该函数
+f = lambda x: x * x 
+f(5) 
+也可以把匿名函数作为返回值返回
+def build(x, y):    
+    return lambda: x * x + y * y 
+9.函数可以作返回值
+def foo(str):
+    print('from foo %s' %str)
+def bar(func):
+    return func     
+
+f=bar(foo)
+print(f)
+f('test')
+# 注意 bar(foo('test')) 相当于先执行foo('test')，再执行bar(None)
+# bar(foo)('test') 等价于 f('test')
+'''
+
+# TODO generator
+'''
+
+'''
+
+
+# TODO iterator iterable
+'''
+凡是可作用于for循环的对象都是Iterable类型； 
+凡是可作用于next()函数的对象都是Iterator类型，它们表示一个惰性计算的序列；
+生成器是Iterator类型，用yield关键字，不用自己实现
+集合数据类型如list、dict、str等是Iterable但不是Iterator，不过可以通过iter()函数获得一个Iterator对象。 
+Python的for循环本质上就是通过不断调用next()函数实现的，例如： 
+for x in [1, 2, 3, 4, 5]:    
+    pass
+实际上完全等价于： 
+# 首先获得Iterator对象: 
+it = iter([1, 2, 3, 4, 5]) 
+# 循环: 
+while True:    
+    try:        
+        # 获得下一个值:        
+        x = next(it)    
+    except StopIteration:        
+        # 遇到StopIteration就退出循环        
+        break
+'''
+
+
+# TODO 函数式编程
+'''
+函数名其实就是指向函数的变量
+既然变量可以指向函数，函数的参数能接收变量，那么一个函数就可以接收另一个函数作为参数，这种函数就称之为 高阶函数。
+# f类似于函数指针
+def add(x, y, f):    
+    return f(x) + f(y) 
+
+1.map
+2.reduce
+from functools import reduce 
+DIGITS = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9} 
+def char2num(s):    
+    return DIGITS[s] 
+def str2int(s):    
+    return reduce(lambda x, y: x * 10 + y, map(char2num, s)) 
+
+3.sorted
+# key指定的函数将作用于list的每一个元素上，并根据key函数返回的结果进行排序
+users = {"tom": 1, "jenny": 3, "jack": 2, "andrew": 4}
+print(sorted(users.keys(), key=lambda user: users.get(user) or float('inf')))
+'''
+
+
+# TODO 闭包
+'''
+当某个函数被当成对象返回时，夹带了外部变量，就形成了一个闭包
+闭包函数相对与普通函数会多出一个__closure__的属性，里面定义了一个元组用于存放所有的cell对象，
+每个cell对象一一保存了这个闭包中所有的外部变量
+https://segmentfault.com/a/1190000007321972
+https://www.cnblogs.com/daodantiantou/p/10373700.html
+Python 命名空间的查找规则简写为 LEGB，四个字母分别代表 local、enclosed、global 和 build-in
+闭包有个重要的特性：内部函数只能引用而不能修改外部函数中定义的自由变量,而是外部的自由变量被内部的局部变量覆盖了,解决办法：
+一种做法是利用可变类型(mutable)的特性，把变量存放在列表(List)之中。对可变的列表的修改并不需要对列表本身赋值
+另一种Python 3 引入了 nonlocal 关键字，明确告诉解释器：这不是局部变量，要找上外头找去，在 Python 2 中，用 global 
+https://www.jianshu.com/p/5eb8dd264bb9
+
+def count():    
+    fs = []    
+    for i in range(1, 4):        
+        def f(): 
+            print("%d,id:%d"%(i,id(i)))            
+            return i*i        
+        fs.append(f)    
+    return fs
+f1, f2, f3 = count() 
+print(f1(),f2(),f3())
+
+
+def count():    
+    def f(j):        
+        def g():            
+            return j*j        
+        return g    
+    fs = []    
+    for i in range(1, 4):        
+        fs.append(f(i)) # f(i)立刻被执行，因此i的当前值被传入f()    
+    return fs
+
+f1, f2, f3 = count() 
+print(f1(),f2(),f3())
+
+def count():    
+    def f(j):        
+        return lambda: j*j    
+    fs = []
+    [fs.append(f(i)) for i in range(1,4)]
+    return fs    
+
+f1, f2, f3 = count() 
+print(f1(),f2(),f3())
+
+def outer():
+    x = 5
+    def inner(): # 上面一行的x相对inner函数来说是函数外的局部变量（非全局变量）
+        nonlocal x
+        x = x + 1 # 在local里，相当于定义一个x变量，并把x+1赋给它，局部变量x还没赋值就被引用了
+        print(x)
+        return x
+    return inner
+
+print(outer()())
+
+
+
+#当我们调用my_sum()时，每次调用都会返回一个新的函数，即使传入相同的参数
+def my_sum(*args):
+    def test():
+        a = 0
+        for i in args:  # 注意此处是 agrs，不是 *agrs
+            a += i
+        return a
+    return test
+
+
+f1 = my_sum(1,2,3)  
+f2 = my_sum(1,2,3)  
+print(my_sum(1,2,3)) # <function my_sum.<locals>.test at 0x00000234C2364160>
+print(my_sum(1,2,3)) # <function my_sum.<locals>.test at 0x00000234C2364160>
+print(f1)  # <function my_sum.<locals>.test at 0x00000234C2364040>
+print(f2)  # <function my_sum.<locals>.test at 0x00000234C23640D0>
+
+'''
+
+# TODO 装饰器 偏函数
+'''
+import functools
+
+# now = log(now)
+def log(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kw):
+        print('call %s():' % func.__name__)
+        return func(*args, **kw)
+    return wrapper
+
+
+# now = log('execute')(now)
+# 我们来剖析上面的语句，首先执行log('execute')，返回的是decorator函数，
+# 再调用返回的函数，参数是now函数，返回值最终是wrapper函数
+# 函数也是对象，它有__name__等属性，但你去看经过decorator装饰之后的函数now
+# now.__name__ ='wrapper'
+def log(text):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            print('%s %s():' % (text, func.__name__))
+            return func(*args, **kw)
+        return wrapper
+    return decorator
+'''
+
+# TODO 偏函数
+'''
+# 创建偏函数时，实际上可以接收函数对象、*args和**kw这3个参数，
+# 当传入：int2 = functools.partial(int, base=2)
+# 相当于：kw = { 'base': 2 }  int('10010', **kw)
+# 当传入：max2 = functools.partial(max, 10)
+# 相当于：args = (10, 5, 6, 7) max(*args)
+
+# 实现偏函数
+def my_partial(func,*args,**kwargs):
+    def newfunc(*fargs,**fkwargs):
+        newkwargs = {**kwargs,**fkwargs}
+        return func(*args,*fargs,**newkwargs)
+    # newfunc.func = func
+    # newfunc.args = args
+    # newfunc.kwargs = kwargs
+    return newfunc
+
+base_hex = my_partial(int,base=2)
+
+print(base_hex('1010'))
+'''
+
+
+# TODO 类
+'''
+1.和静态语言不同，Python允许对实例变量绑定任何数据，
+也就是说，对于两个实例变量，虽然它们都是同一个类的不 同实例，但拥有的变量名称都可能不同
+Class A:
+    pass
+
+A.name = 'xiaoming'
+print(A.name)
+
+2. 访问限制
+在Python中，实例的变量名如果以__开 头，就变成了一个私有变量（private），只有内部可以访问，外部不能访问，对外提供 get/set接口
+不能直接访问__name是因为Python解释器对外 把__name变量改成了_Student__name，
+所以，仍然可以通过_Student__name来访问__name变量
+
+以一个下划线开头的实例变量名，比如_name，这样的实例变量外部是可以访问的，
+但是，按照约定俗成的规定，当你看到这样的变量时，意思就是，“虽然我可以被访问，但是，请把我视为私有变量，不要随意访问
+
+3.继承和多态
+
+Python的“file-like object“就是一种鸭子类型
+
+如果要判断一个对象是否是函数怎么办？可以使用types模块中定义的常量：
+import types
+def fn():  
+    pass
+type(fn)==types.FunctionType
+
+总是优先使用isinstance()判断类型，可以将指定类型及其子类“一网打尽”
+isinstance([1, 2, 3], (list, tuple)) 
+
+如果要获得一个对象的所有属性和方法，可以使用dir()函数，它返回一个包含字符串的list
+
+getattr()、setattr()以及hasattr()，我们可以直接操作一个对象的状态
+fn = getattr(obj, 'power', 404) # 获取属性'power'，如果不存在，返回默认值404 
+fn() # 调用fn()与调用obj.power()是一样的, fn指向obj.power 
+
+# python 类的继承
+（1）：直接调用父类属性方法；
+（2）：重写父类属性方法；
+        子类没有重写父类的方法，当调用该方法的时候，会调用父类的方法，当子类重写了父类的方法，默认是调用自身的方法。
+        另外，如果子类Son重写了父类Father的方法，如果想调用父类的action方法，可以利用super().func() # func()为父类方法
+（3）：强制调用父类私有属性方法； 编译器是把这个方法的名字改成了 _Father__func()
+（4）：调用父类的__init__方法
+        如果自己也定义了 __init__ 方法,那么父类的属性是不能直接调用的，会报错
+        修改方法：可以在 子类的 __init__中调用一下父类的 __init__ 方法,这样就可以调用了
+（5）：继承父类初始化过程中的参数
+原文链接：https://blog.csdn.net/yilulvxing/article/details/85374142
+class Father(object):    
+    def __init__(self, age):        
+        self.age=age        
+        print ( "age: %d" %( self.age) )    
+    def getAge(self):        
+        print('Father return ')        
+        return self.age 
+
+class Son(Father):  
+    def __init__(self,age):
+        # Father.__init__(self,age) # python2.2以前
+        # super(Son,self).__init__(age) # python2.2以后
+        super().__init__(age)  # python3以后
+        print("hello")  
+    def getAge(self):        
+        print('Son return')        
+        return self.age
+    def getAge2(self): 
+        super().getAge()       
+        print('Son return')        
+        return self.age
+
+son=Son(18)
+print (son.getAge())
+print (son.getAge2())
+
+
+4.实例属性和类属性
+实例属性属于各个实例所有，互不干扰；
+Student a
+a.name = 'xiaoming'
+类属性属于类所有，所有实例共享一个属性
+class Student(object):   
+    name = 'Student'
+在编写程序的时候，千万不要对实例属性和类属性使用相同的名字，
+因为相同名称的实例属 性将屏蔽掉类属性，但是当你删除实例属性后，再使用相同的名称，访问到的将是类属性
+'''
+
+
+# TODO 类的高级特性
+'''
+1.__slots__
+动态绑定允许我们在程序运行的过程中动态给class加上功能，这在静态语言中很难实现
+为了达到限制的目的，Python允许在定义class的时候，定义一个特殊的__slots__变量，来限制该class实例能添加的属性：
+class Student(object):    
+    __slots__ = ('name', 'age') # 用tuple定义允许绑定的属性名称
+ s = Student()
+ s.name = 'Michael' # ok
+ s.score = 99 # 绑定属性'score' ,error
+ 使用__slots__要注意，__slots__定义的属性仅对当前类实例起作用，对继承的子类是不起作用的
+
+2.@property
+@property装饰器就是负责把一个方法变成属性调用的： 
+
+class Student(object): 
+    def __init__(self,name,score=18):
+        self.name =name
+        self.__score =score    #score属性外部不能访问  _Student__score
+   
+    @property    
+    def score(self):        
+        return self._score    
+    @score.setter    
+    def score(self, value):        
+        if not isinstance(value, int):            
+            raise ValueError('score must be an integer!')        
+        if value < 0 or value > 100:            
+            raise ValueError('score must between 0 ~ 100!')        
+        self._score = value 
+
+s = Student() 
+s.score = 60 # OK，实际转化为s.set_score(60) 
+s.score # OK，实际转化为s.get_score() 
+
+可以定义只读属性，只定义getter方法，不定义setter方法就是一个只读属性
+
+3.__str__
+class Student(object):    
+    def __init__(self, name):        
+        self.name = name    
+    def __str__(self):        
+        return 'Student object (name=%s)' % self.name    
+    __repr__ = __str__ 
+
+4.__iter__
+# 想要被for循环迭代，这个类就要有__iter__(),返回一个迭代对象
+# for就会不断调用该调用这个迭代对象的__next__()方法拿到返回的值，然后继续调用next方法继续返回值，直到StopIteration退出循环
+# 执行书顺序为： __init__ __iter__  __next__  print __next__ print __next__ ...
+class Fib(object):
+    def __init__(self):
+        self.a,self.b = 0,1
+    def __iter__(self):
+        return self
+    def __next__(self):
+        self.a,self.b =self.b,self.a+self.b
+        if self.a > 20:
+            raise StopIteration
+        return self.a
+
+for n in Fib():
+    print(n)
+
+import re
+class Sentence():
+    def __init__(self,text):
+        self.text = text
+        self.words = re.findall(r'\w+',text)
+    def __repr__(self):
+        return "Sentence:%s" % self.text
+    def __iter__(self):
+        # return (match.group() for match in re.finditer(r'\w+',self.text))
+        for i in self.words:
+            yield i
+
+title=Sentence('We have a dream!')
+for i in title:
+    print(i)
+
+5.__getitem__
+像list一样切片
+class Slice(object):
+    def __getitem__(self,n):
+        if isinstance(n,int):
+            a,b =0,1
+            for x in range(n):
+                a,b =b,a+b
+            return a
+        if isinstance(n,slice):
+            start = n.start
+            stop = n.stop
+            if start is None:
+                start =0
+            a,b =0,1
+            L = []
+            for x in range(stop):
+                if x >= start:
+                    L.append(a)
+                a,b =b,a+b
+            return L
+
+f=Slice()
+print(f[0])
+print(f[0:5])
+
+6.__getattr__
+当调用不存在的属性时，比如score，Python解释器会试图调用__getattr__(self, attr)来尝试获得属性
+class Student(object):    
+    def __getattr__(self, attr):        
+        if attr=='age':            
+            return lambda: 25        
+        raise AttributeError('\'Student\' object has no attribute \'%s\'' % attr)
+
+
+s = Student()
+print(s.age())
+print(s.name)
+
+
+# 重要
+class Chain(object):    
+    def __init__(self, path=''):        
+        self._path = path    
+    def __getattr__(self, path):        
+        return Chain('%s/%s' % (self._path, path))    
+    def __str__(self):        
+        return self._path    
+    __repr__ = __str__
+    def __call__(self,name):
+        return Chain('%s/%s' % (self._path, name))
+
+print(Chain().users('michael').repos.pubilc.owner('jack'))
+
+7.__call__
+任何类，只需要定义一个__call__()方法，就可以直接对实例进行调用
+__call__()还可以定义参数。对实例进行直接调用就好比对一个函数进行调用一样
+怎么判断一个变量是对象还是函数呢？我们需要判断一个对象是否能被调用，能被调用的 对象就是一个Callable对象
+
+8. __getattribute__
+1. 无论调用对象的什么属性，包括不存在的属性，都会首先调用“_ getattribute_”方法，注意避免无限递归
+2. 只有找不到对象的属性时，才会调用“_ getattr_”方法；
+class AboutAttr(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __getattribute__(self, item):
+        try:
+            return super(AboutAttr, self).__getattribute__(item)
+        except KeyError:
+            return 'default'
+        except AttributeError as ex:
+            return self.__getattr__(item)
+
+    def __getattr__(self, item):
+        return 'default'
+
+at = AboutAttr('test')
+print(at.name)
+print(at.not_exised)
+
+#无限递归
+# 为了避免无限递归，应该把获取属性的方法指向一个更高的超类，例如object
+class A:
+    x = 'a'
+
+    def __getattribute__(self, item):
+        print('__getattribute__')
+        return self.item
+        # return super().__getattribute__(self, item)
+
+a = A()
+print(a.x) # ecursionError: maximum recursion depth exceeded
+'''
+
+
+# TODO  枚举类
+'''
+import re
+
+from enum import Enum
+Month = Enum('TEST', ('Jan', 'Feb', 'Mar', 'Apr'))
+for name, member in Month.__members__.items():    
+    print(name, '=>', member, ',', member.value) 
+
+# Jan => TEST.Jan , 1
+
+class Color(Enum):
+    YELLOW =1
+    RED =2
+    GREEN =3
+
+print(Color.YELLOW)
+print(Color.YELLOW.value)
+print(Color(1))
+print(type(Color(1)))
+'''
+
+
+# TODO  staticmethod classmethod
+'''
+# 方法不需要访问任何成员，或者只需要显式访问这个类自己的成员。这样的方法不需要额外参数，应当用 @staticmethod装饰。
+# 方法不需要访问实例的成员，但需要访问基类或派生类的成员。这时应当用@classmethod装饰。装饰后的方法，其第一个参数不再传入实例，而是传入调用类本身 
+# 使用@classmethod时需要注意，由于在继承场景下传入的第一个参数并不一定是这个类本身
+# 因此并非所有访问类成员的场景都应该用@classmethod
+# 涉及到继承 推荐用classmethod
+# https://www.zhihu.com/question/26930016
+区别
+在定义静态类方法和类方法时，@staticmethod 装饰的静态方法里面，想要访问类属性或调用实例方法，必须需要把类名写上；
+而@classmethod装饰的类方法里面，会传一个cls参数，代表本类，这样就能够避免手写类名的硬编码。
+在调用静态方法和类方法时，实际上写法都差不多，一般都是通过 类名.静态方法() 或 类名.类方法()。
+也可以用实例化对象去调用静态方法和类方法，但为了和实例方法区分，最好还是用类去调用静态方法和类方法。
+使用场景
+所以，在定义类的时候，
+假如不需要用到与类相关的属性或方法时，就用静态方法@staticmethod；
+假如需要用到与类相关的属性或方法，然后又想表明这个方法是整个类通用的，而不是对象特异的，就可以使用类方法@classmethod。
+# https://stackoverflow.com/questions/12179271/meaning-of-classmethod-and-staticmethod-for-beginner?r=SearchResults&s=2|390.6225
+
+class Date(object):
+
+    def __init__(self, day=0, month=0, year=0):
+        self.day = day
+        self.month = month
+        self.year = year
+
+    @classmethod
+    def from_string(cls, date_as_string):
+        day, month, year = map(int, date_as_string.split('-'))
+        date1 = cls(day, month, year)
+        return date1
+
+    @staticmethod
+    def is_date_valid(date_as_string):
+        day, month, year = map(int, date_as_string.split('-'))
+        return day <= 31 and month <= 12 and year <= 3999
+
+date2 = Date.from_string('11-09-2012')
+is_date = Date.is_date_valid('11-09-2012')
+
+class Base():
+    init = False
+    def normal_method(self):  # <bound method Base.normal_method of <__main__.Base object at 0x000002424C298EB0>>
+        print('normal method')
+        
+    @classmethod
+    def set_init(cls):     # <bound method Base.set_init of <class '__main__.Base'>>  ,b.set_init 和Base.set_init相同
+        cls.init = True    # 传入的是Derived类，给Derived添加了成员,Derived的init和Base的init不是同一个属性，屏蔽掉了
+        cls().normal_method()
+ 
+    # @staticmethod   #可以直接用类的对象调用  # <function Base.set_init at 0x000002424C2A60D0> ，b.set_init 和Base.set_init相同
+    # def set_init():
+    #     Base.init = True
+
+class Derived(Base):
+    pass
+
+print('-------------')
+
+Derived.set_init()
+print(Derived.init)
+print(Base.init)
+print(id(Derived.init))
+print(id(Base.init))
+# del Derived.init
+# print(id(Base.init))
+# print(id(Derived.init))
+'''
+
+
+# TODO 元类
+'''
+def fn(self,name='world'):
+    print('hello,%s' % name)
+
+Hello = type('hello',(object,),dict(hello=fn))
+
+h = Hello()
+h.hello()
+print(type(Hello))
+print(type(h))
+print(type(h.hello))
+
+class ListMetaclass(type):
+    def __new__(cls,name,bases,attrs):
+        print('%s,%s,%s,%s' %(cls,name,bases,attrs))
+        attrs['add'] = lambda self,value:self.append(value)
+        # return type.__new__(cls, name, bases, attrs) 等价
+        return type(name,bases,attrs)
+
+class MyList(list, metaclass=ListMetaclass):
+    pass
+
+L = MyList()
+L.add(1)
+print(L)
+
+
+class ModelMetaclass(type):
+    def __new__(cls,name,bases,attrs):
+        if name == 'Model':
+            return type.__new__(cls,name,bases,attrs)
+        print('Found model:%s' % name)
+        mappings = dict()
+        for k,v in attrs.items():
+            if isinstance (v,Field):
+                print('Found Mapping: %s ==> %s' % (k,v))
+                mappings[k] = v
+        for k in mappings.keys():
+            attrs.pop(k)
+        attrs['__mappings__'] = mappings
+        attrs['__table__'] = name
+        return type.__new__(cls,name,bases,attrs)
+
+class Model(dict,metaclass=ModelMetaclass):
+    def __init__(self,**kw):
+        super(Model,self).__init__(**kw)
+    def __getattr__(self,key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(r"'Model' object has no attribute '%s'" % key)
+    def __setattr__(self,key,value):
+        self[key] = value
+    def save(self):
+        fields = []
+        params = []        
+        args = []        
+        for k, v in self.__mappings__.items():
+            fields.append(k)
+            params.append('?') 
+            args.append(getattr(self, k, None))        
+        sql = 'insert into %s (%s) values (%s)' % (self.__table__, ','.join(fields), ','.join(params))        
+        print('SQL: %s' % sql)        
+        print('ARGS: %s' % str(args)) 
+
+class Field(object):
+    def __init__(self,name,column_type):
+        self.name = name
+        self.column_type = column_type
+    def __str__(self):
+        return '<%s:%s>' % (self.__class__.__name__,self.name)
+
+class StringField(Field):
+    def __init__(self,name):
+        super(StringField,self).__init__(name,'varchar(100)')
+
+class IntegerField(Field):
+    def __init__(self,name):
+        super(IntegerField,self).__init__(name,'bigint')
+
+class User(Model):
+    # 定义类的属性到列的映射：
+    id = IntegerField('id')
+    name = StringField('username')
+    email = StringField('email')
+    password = StringField('password')
+
+u = User(id=12345, name='Michael', email='test@orm.org', password='my-pwd') 
+u.save() 
+'''
+
+
+# TODO 二维数组的正确写法
+'''
+num_list = [ [0]*5 ]*2  # error
+num_list = [ [0] * 5 for i in range(2)]   # right
+
+#  获取list特定元素下标
+# 仅仅能获取都第一个匹配的value的下标
+a=[72, 56, 76, 84, 80, 88,76]
+print(a.index(76))
+
+# 利用enumerate函数
+print(list(enumerate(a)))  # tuple 
+print [i for i,x in enumerate(a) if x == 76]
+'''
+
+
+# TODO 'and or'
+# and中含0，返回0； 均为非0时，返回后一个值， 
+2 and 0   # 返回0
+2 and 1   # 返回1
+1 and 2   # 返回2
+
+# or中， 至少有一个非0时，返回第一个非0,
+2 or 0   # 返回2
+2 or 1   # 返回2
+0 or 1   # 返回1 
+
+
 
 
 
